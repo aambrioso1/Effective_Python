@@ -38,7 +38,7 @@ print(f'found_better: {found}')
 
 # One other advantage of the comprehensions is that they avoid the leakage caused by looping.
 
-# This example leaks.
+# This example leaks because of the assignment operator.
 half = [(last := count // 2) for count in stock.values()]
 print(f'Last item of {half} is {last}')
 
@@ -47,7 +47,7 @@ for count in stock.values():
 	pass
 print(f'Last item of {list(stock.values())} is {count}')
 
-# This examples has a loop variable in a comprehension and does not leak.
+# This example has a loop variable in a comprehension and does not leak.
 half = [count_comp // 2 for count_comp in stock.values()]
 print(f'half = {half}')
 
