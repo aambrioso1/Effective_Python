@@ -10,7 +10,6 @@ fresh_fruit = {
     'lemon': 5,
 }
 
-
 # Example 2
 def make_lemonade(count):
     print(f'Making {count} lemons into lemonade')
