@@ -5,7 +5,7 @@ Item 14:  Sort Complex Criteria Using the key Parameter
 
 import logging
 from pprint import pprint
-from sys import stdout as STDOUT
+
 
 
 # Example 1
@@ -40,18 +40,19 @@ else:
     assert False
 
 
-# Example 4
+# Example 4:  The key parameter for sort can be used to provide a sort function
+
 print('Unsorted:', repr(tools))
 tools.sort(key=lambda x: x.name)
-print('\nSorted:  ', tools)
+print('\nSorted alphabetically:  ', tools)
 
 
-# Example 5
+# Example 5:
 tools.sort(key=lambda x: x.weight)
 print('By weight:', tools)
 
 
-# Example 6
+# Example 6:  With the key parameter, you can transform values before sorting.
 places = ['home', 'work', 'New York', 'Paris']
 places.sort()
 print('Case sensitive:  ', places)
@@ -82,7 +83,7 @@ assert drill[1] < sander[1]   # Alphabetically less
 assert drill < sander         # Thus, drill comes first
 
 
-# Example 10
+# Example 10:  Returning a tuple allows for 
 power_tools.sort(key=lambda x: (x.weight, x.name))
 print(power_tools)
 
@@ -93,12 +94,12 @@ power_tools.sort(key=lambda x: (x.weight, x.name),
 print(power_tools)
 
 
-# Example 12
+# Example 12:  Use unary negation to reverse sort order if possible.
 power_tools.sort(key=lambda x: (-x.weight, x.name))
 print(power_tools)
 
 
-# Example 13
+# Example 13:  Can't negate a string.
 try:
     power_tools.sort(key=lambda x: (x.weight, -x.name),
                      reverse=True)
@@ -108,7 +109,7 @@ else:
     assert False
 
 
-# Example 14
+# Example 14:  Order of first sort is preserved if second sort has a elements that tie.
 power_tools.sort(key=lambda x: x.name)   # Name ascending
 
 power_tools.sort(key=lambda x: x.weight, # Weight descending
@@ -117,12 +118,12 @@ power_tools.sort(key=lambda x: x.weight, # Weight descending
 pprint(power_tools)
 
 
-# Example 15
+# Example 15:  This prints out the first sort to explain the stability of earlier sorts.
 power_tools.sort(key=lambda x: x.name)
 pprint(power_tools)
 
 
-# Example 16
+# Example 16:  Print out the second sort.
 power_tools.sort(key=lambda x: x.weight,
                  reverse=True)
 pprint(power_tools)

@@ -1,7 +1,7 @@
 """
 Item 4:  Prefer Interpolated F-Strings Over C-style Format Strings and str.format
 
-"The combination of expressivenes, terseness, and clarity provided by f-strings makes them
+Slatlin:  "The combination of expressiveness, terseness, and clarity provided by f-strings makes them
 the best built-in option for Python programmers."
 
 """
