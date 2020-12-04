@@ -1,12 +1,5 @@
 """
-Item :  Know Which Version of Python You're Using
-
+Item :  
 """
 
-# for the shell $ python --version
-
-import sys
-
-print(sys.version_info)
-print(sys.version)
 
