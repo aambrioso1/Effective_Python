@@ -24,40 +24,16 @@ random.seed(1234)
 
 import logging
 from pprint import pprint
-from sys import stdout as STDOUT
-
-# Write all output to a temporary directory
-import atexit
-import gc
-import io
-import os
-import tempfile
-
-TEST_DIR = tempfile.TemporaryDirectory()
-atexit.register(TEST_DIR.cleanup)
-
-# Make sure Windows processes exit cleanly
-OLD_CWD = os.getcwd()
-atexit.register(lambda: os.chdir(OLD_CWD))
-os.chdir(TEST_DIR.name)
-
-def close_open_files():
-    everything = gc.get_objects()
-    for obj in everything:
-        if isinstance(obj, io.IOBase):
-            obj.close()
-
-atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  A dictionary to keep track of cities visited
 visits = {
     'Mexico': {'Tulum', 'Puerto Vallarta'},
     'Japan': {'Hakone'},
 }
 
 
-# Example 2
+# Example 2:  Add item with setdefault or expressions
 visits.setdefault('France', set()).add('Arles')  # Short
 
 if (japan := visits.get('Japan')) is None:       # Long
@@ -70,7 +46,8 @@ print(visits)
 print = original_print
 
 
-# Example 3
+# Example 3:  You can create a class and use setdefault that hides the complexity of the setdefault call
+# and provides a nicer interface for the user.
 class Visits:
     def __init__(self):
         self.data = {}
@@ -80,14 +57,15 @@ class Visits:
         city_set.add(city)
 
 
-# Example 4
+# Example 4:  Shows off the nice interface.
 visits = Visits()
 visits.add('Russia', 'Yekaterinburg')
 visits.add('Tanzania', 'Zanzibar')
 print(visits.data)
 
 
-# Example 5
+# Example 5: Setdefault has a confusing name and the code constructs a new set on every call.  
+# A better way to implement this behavior is to use defaultdict in the collections built-in module.
 from collections import defaultdict
 
 class Visits:
@@ -101,3 +79,6 @@ visits = Visits()
 visits.add('England', 'Bath')
 visits.add('England', 'London')
 print(visits.data)
+
+
+print(TEST_DIR)

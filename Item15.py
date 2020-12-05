@@ -194,12 +194,12 @@ else:
 
 # Example 17
 """
-Check types in this file with: python -m mypy <path>
+"Check types in this file with: python -m mypy <path>
 Add type annotations to your Python programs, and use mypy to type check them. 
 Mypy is essentially a Python linter on steroids, and it can catch many 
 programming errors by analyzing your program, without actually having to run it.
 Mypy has a powerful type system with features such as type inference, 
-gradual typing, generics and union types.
+gradual typing, generics and union types." 
 
 pip install mypy
 

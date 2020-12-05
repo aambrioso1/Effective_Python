@@ -12,7 +12,8 @@ KeyError exceptions, the get method, and the setdefault method.
 
 The get method is best for dictionaries that contain basic types.
 
-If the setdefault method seems like the bests fit conisder using defaultdict instead.
+If the setdefault method seems like the bests fit consider using defaultdict instead.
+See Item 17.
 """
 
 import logging
