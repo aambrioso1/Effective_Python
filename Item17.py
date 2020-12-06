@@ -2,22 +2,6 @@
 Item 17:  Prefer defaultdict Over setdefault to Handle Missing Items in Internal State
 """
 
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Reproduce book environment
 import random
 random.seed(1234)
@@ -57,15 +41,17 @@ class Visits:
         city_set.add(city)
 
 
-# Example 4:  Shows off the nice interface.
+# Example 4:  Shows off the nice interface.   
 visits = Visits()
-visits.add('Russia', 'Yekaterinburg')
-visits.add('Tanzania', 'Zanzibar')
+visits.add('Russia', 'Yekaterinburg') # Compare to the short version above
+visits.add('Tanzania', 'Zanzibar') # Compare to the short version above
+visits.add('Russia', 'Moscow')
+visits.add('Russia', 'St. Petersburg')
 print(visits.data)
 
 
-# Example 5: Setdefault has a confusing name and the code constructs a new set on every call.  
-# A better way to implement this behavior is to use defaultdict in the collections built-in module.
+# Example 5: The setdefault method has a confusing name and the code constructs a new set on every call.  
+# A better way to implement the desire behavior with a dictionary is to use defaultdict from the collections built-in module.
 from collections import defaultdict
 
 class Visits:
@@ -76,9 +62,14 @@ class Visits:
         self.data[country].add(city)
 
 visits = Visits()
+visits.add('Russia', 'Yekaterinburg')
+visits.add('Tanzania', 'Zanzibar')
+visits.add('Russia', 'Moscow')
+visits.add('Russia', 'St. Petersburg')
 visits.add('England', 'Bath')
 visits.add('England', 'London')
 print(visits.data)
-
-
-print(TEST_DIR)
+# defaultdict easily turn to a dictionary.
+print(dict(visits.data))
+# But defaultdict works just like a Python dictionary.
+print(visits.data['Russia'])
