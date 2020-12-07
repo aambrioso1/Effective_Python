@@ -17,6 +17,7 @@ def careful_divide(a: float, b: float) -> float:
 	except ZeroDivisionError as e:
 		raise ValueError('Invalid inputs')
 
+print('careful_divide documentation provided by doc string')
 print(careful_divide.__doc__)
 print(f'1.0 / 3.0 = {careful_divide(1.0, 3.0)}')
 print(f'1.0 / 3 = {careful_divide(1.0, 3)}')

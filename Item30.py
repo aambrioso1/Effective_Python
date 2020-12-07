@@ -4,10 +4,7 @@ Item 30: Consider Generators Instead of Returning Lists
 Generators can be clearer than list of results.
 Generators can produce output for arbitrarily large input because their working memory
 doesn't all inputs and outputs.
-
 """
-
-
 
 address = "Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal."
 
