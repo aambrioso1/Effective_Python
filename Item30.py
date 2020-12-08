@@ -39,6 +39,10 @@ def index_file(handle):
 
 import itertools
 
+# With the generator, index_file(f), working memory is limited to maximum length of one line of input.
+# We can also control how many value we want to generate.  
+# Here we use islice from the itertools library to generate the desired values.  
+# The itertools library has other tools for working with iterators and generators.
 with open('C:\\Users\\Alex\\Effective_Python\\address.txt', 'r') as f:
 	it = index_file(f)
 	results = itertools.islice(it, 0 , 50)
