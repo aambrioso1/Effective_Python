@@ -1,17 +1,14 @@
 """
 Item 14:  Sort Complex Criteria Using the key Parameter
-
 """
 
 import logging
 from pprint import pprint
 
-
-
 # Example 1
 numbers = [93, 86, 11, 68, 70]
-numbers.sort()
-pprint(numbers)
+numbers.sort(reverse=True)
+print(f'sorted list: {numbers}')
 
 
 # Example 2
@@ -19,9 +16,17 @@ class Tool:
     def __init__(self, name, weight):
         self.name = name
         self.weight = weight
-
+    """
+    https://docs.python.org/3/library/string.html#format-string-syntax
+    name!r calls repr() on the argument first. 
+    """
     def __repr__(self):
         return f'Tool({self.name!r}, {self.weight})'
+
+    def __str__(self):
+        return f'Tool({self.name!r})'
+
+my_tool = Tool('plyers', 1.0)
 
 tools = [
     Tool('level', 3.5),
@@ -29,6 +34,9 @@ tools = [
     Tool('screwdriver', 0.5),
     Tool('chisel', 0.25),
 ]
+# This illustrates that __repr__ and __str__ is the default.
+print(f'my_tool: {my_tool}') # Uses __str__
+print(f'tools: {tools}') # Uses __repr__
 
 
 # Example 3

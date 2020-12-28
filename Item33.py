@@ -65,7 +65,7 @@ def slow():
 
 def fast():
 	# Nest the child generator with another one using yield/from
-	# Slatkin call this composed nesting.
+	# Slatkin calls this composed nesting.
     yield from child()
 
 baseline = timeit.timeit(

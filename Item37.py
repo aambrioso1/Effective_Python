@@ -1,6 +1,9 @@
 """
 Item 37: Compose Classes Instead of Nesting Many Levels of Built-in Types
 
+***Important Item***
+Great example of the use of classes in Python.
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -73,11 +76,17 @@ book.add_student('Isaac Newton')
 book.report_grade('Isaac Newton', 90)
 book.report_grade('Isaac Newton', 95)
 book.report_grade('Isaac Newton', 85)
+book.add_student('Gottfried Wilhelm Leibniz')
+book.report_grade('Gottfried Wilhelm Leibniz', 85)
+book.report_grade('Gottfried Wilhelm Leibniz', 95)
+book.report_grade('Gottfried Wilhelm Leibniz', 85)
 
-print(book.average_grade('Isaac Newton'))
+
+print('Newton\'s average: ', book.average_grade('Isaac Newton'))
+print('Leibniz\'s average: ', book.average_grade('Gottfried Wilhelm Leibniz'))
 
 
-# Example 3
+# Example 
 from collections import defaultdict
 
 class BySubjectGradebook:
@@ -176,9 +185,21 @@ print(average_grade)
 
 
 # Example 11
+""" 
+From the Python doc at https://docs.python.org/3/library/collections.html#collections.namedtuple
+
+Named tuples assign meaning to each position in a tuple and allow for more readable, 
+self-documenting code. They can be used wherever regular tuples are used, and they 
+add the ability to access fields by name instead of position index.
+
+Named tuples are especially useful for assigning field names to result tuples returned by 
+the csv or sqlite3 modules ....
+"""
 from collections import namedtuple
 
 Grade = namedtuple('Grade', ('score', 'weight'))
+
+
 
 
 # Example 12
@@ -233,3 +254,4 @@ gym = albert.get_subject('Gym')
 gym.report_grade(100, 0.40)
 gym.report_grade(85, 0.60)
 print(albert.average_grade())
+print(f'A list of Albert\'s grades in gym: {gym._grades}')

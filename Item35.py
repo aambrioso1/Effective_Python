@@ -3,55 +3,11 @@ Item 35: Avoid Causing State Transitions in Generators with throw
 
 """
 
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# Reproduce book environment
-import random
-random.seed(1234)
-
 import logging
 from pprint import pprint
-from sys import stdout as STDOUT
-
-# Write all output to a temporary directory
-import atexit
-import gc
-import io
-import os
-import tempfile
-
-TEST_DIR = tempfile.TemporaryDirectory()
-atexit.register(TEST_DIR.cleanup)
-
-# Make sure Windows processes exit cleanly
-OLD_CWD = os.getcwd()
-atexit.register(lambda: os.chdir(OLD_CWD))
-os.chdir(TEST_DIR.name)
-
-def close_open_files():
-    everything = gc.get_objects()
-    for obj in everything:
-        if isinstance(obj, io.IOBase):
-            obj.close()
-
-atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  Think of throw as meaning "throw an exception."  This example demonstrates how throw behaves.
 try:
     class MyError(Exception):
         pass
@@ -64,14 +20,14 @@ try:
     it = my_generator()
     print(next(it))  # Yield 1
     print(next(it))  # Yield 2
-    print(it.throw(MyError('test error')))
+    print(it.throw(MyError('test error'))) # Third iteration will return "test error"
 except:
     logging.exception('Expected')
 else:
     assert False
 
 
-# Example 2
+# Example 2:  Shows how to inject an exception with a throw statement
 def my_generator():
     yield 1
 
@@ -87,10 +43,11 @@ def my_generator():
 it = my_generator()
 print(next(it))  # Yield 1
 print(next(it))  # Yield 2
-print(it.throw(MyError('test error')))
+print(it.throw(MyError('test error'))) # Exception thrown on third iteration
 
 
-# Example 3
+# Example 3:  Examples 3 and 4 demonstate how throw might be used.
+# Throw is used to reset the time.
 class Reset(Exception):
     pass
 
@@ -105,9 +62,10 @@ def timer(period):
 
 
 # Example 4
+# This list is polled on each iteration to decide if a reset is needed
 RESETS = [
     False, False, False, True, False, True, False,
-    False, False, False, False, False, False, False]
+    False, False, False, False, False, False, False] 
 
 def check_for_reset():
     # Poll for external event
@@ -128,11 +86,11 @@ def run():
             break
         else:
             announce(current)
-
+print('Behavior using throw:')
 run()
 
 
-# Example 5
+# Example 5:  Avoid using throw.  A better way to implement the behavior above is to define a class.  
 class Timer:
     def __init__(self, period):
         self.current = period
@@ -146,7 +104,6 @@ class Timer:
             self.current -= 1
             yield self.current
 
-
 # Example 6
 RESETS = [
     False, False, True, False, True, False,
@@ -159,4 +116,5 @@ def run():
             timer.reset()
         announce(current)
 
+print('\nBehavior using a class:')
 run()

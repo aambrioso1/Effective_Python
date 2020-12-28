@@ -1,8 +1,44 @@
 """
 Item 36: Consider using itertools for Working with Iterators and Generators
 
+Things two remember:
+
+The itertools has many tools for interacting with iterators.
+Three main categories:
+(1)  linking iterators together
+(2)  filtering items they output
+(3)  producing combinations of items
+
+There are more advanced functions, additional parameters, and useful recipes available in the
+docs at help(itertools)
+
+One of the guest on Talk Python with Me, claimed that studying the code in itertools module was
+like getting a graduate education in Python.
+
 """
 
+#!/usr/bin/env PYTHONHASHSEED=1234 python3
+
+# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Reproduce book environment
+import random
+random.seed(1234)
+
+import logging
+from pprint import pprint
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
 # Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
@@ -52,111 +88,124 @@ atexit.register(close_open_files)
 
 
 # Example 1
-try:
-    class MyError(Exception):
-        pass
-    
-    def my_generator():
-        yield 1
-        yield 2
-        yield 3
-    
-    it = my_generator()
-    print(next(it))  # Yield 1
-    print(next(it))  # Yield 2
-    print(it.throw(MyError('test error')))
-except:
-    logging.exception('Expected')
-else:
-    assert False
+import itertools
 
 
 # Example 2
-def my_generator():
-    yield 1
-
-    try:
-        yield 2
-    except MyError:
-        print('Got MyError!')
-    else:
-        yield 3
-
-    yield 4
-
-it = my_generator()
-print(next(it))  # Yield 1
-print(next(it))  # Yield 2
-print(it.throw(MyError('test error')))
+it = itertools.chain([1, 2, 3], [4, 5, 6])
+print(list(it))
 
 
 # Example 3
-class Reset(Exception):
-    pass
-
-def timer(period):
-    current = period
-    while current:
-        current -= 1
-        try:
-            yield current
-        except Reset:
-            current = period
+it = itertools.repeat('hello', 3)
+print(list(it))
 
 
 # Example 4
-RESETS = [
-    False, False, False, True, False, True, False,
-    False, False, False, False, False, False, False]
-
-def check_for_reset():
-    # Poll for external event
-    return RESETS.pop(0)
-
-def announce(remaining):
-    print(f'{remaining} ticks remaining')
-
-def run():
-    it = timer(4)    
-    while True:
-        try:
-            if check_for_reset():
-                current = it.throw(Reset())
-            else:
-                current = next(it)
-        except StopIteration:
-            break
-        else:
-            announce(current)
-
-run()
+it = itertools.cycle([1, 2])
+result = [next(it) for _ in range (10)]
+print(result)
 
 
 # Example 5
-class Timer:
-    def __init__(self, period):
-        self.current = period
-        self.period = period
-
-    def reset(self):
-        self.current = self.period
-
-    def __iter__(self):
-        while self.current:
-            self.current -= 1
-            yield self.current
+it1, it2, it3 = itertools.tee(['first', 'second'], 3)
+print(list(it1))
+print(list(it2))
+print(list(it3))
 
 
 # Example 6
-RESETS = [
-    False, False, True, False, True, False,
-    False, False, False, False, False, False, False]
+keys = ['one', 'two', 'three']
+values = [1, 2]
 
-def run():
-    timer = Timer(4)
-    for current in timer:
-        if check_for_reset():
-            timer.reset()
-        announce(current)
+normal = list(zip(keys, values))
+print('zip:        ', normal)
 
-run()
+it = itertools.zip_longest(keys, values, fillvalue='nope')
+longest = list(it)
+print('zip_longest:', longest)
+
+
+# Example 7
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+first_five = itertools.islice(values, 5)
+print('First five: ', list(first_five))
+
+middle_odds = itertools.islice(values, 2, 8, 2)
+print('Middle odds:', list(middle_odds))
+
+
+# Example 8
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+less_than_seven = lambda x: x < 7
+it = itertools.takewhile(less_than_seven, values)
+print(list(it))
+
+
+# Example 9
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+less_than_seven = lambda x: x < 7
+it = itertools.dropwhile(less_than_seven, values)
+print(list(it))
+
+
+# Example 10
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+evens = lambda x: x % 2 == 0
+
+filter_result = filter(evens, values)
+print('Filter:      ', list(filter_result))
+
+filter_false_result = itertools.filterfalse(evens, values)
+print('Filter false:', list(filter_false_result))
+
+
+# Example 11:  A function of two values is generated by applying the function to
+# the previous accumulated value and the next value in the input iterator.
+
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+sum_reduce = itertools.accumulate(values)
+print('Sum:   ', list(sum_reduce))
+
+def sum_modulo_20(first, second):
+    output = first + second
+    return output % 20
+
+modulo_reduce = itertools.accumulate(values, sum_modulo_20)
+print('Modulo:', list(modulo_reduce))
+
+def multiply(first,second):
+    return first + (2 * second)
+
+mult_acummulator = itertools.accumulate(values, multiply)
+print('mult_acummulator:' , list(mult_acummulator))
+
+
+# Example 12
+single = itertools.product([1, 2], repeat=2)
+print('Single:  ', list(single))
+
+multiple = itertools.product([1, 2], ['a', 'b'])
+print('Multiple:', list(multiple))
+
+
+# Example 13
+it = itertools.permutations([1, 2, 3, 4], 2)
+original_print = print
+print = pprint
+print(list(it))
+print = original_print
+
+
+# Example 14
+it = itertools.combinations([1, 2, 3, 4], 2)
+print(list(it))
+
+
+# Example 15
+it = itertools.combinations_with_replacement([1, 2, 3, 4], 2)
+original_print = print
+print = pprint
+print(list(it))
+print = original_print
