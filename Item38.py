@@ -148,5 +148,7 @@ counter = BetterCountMissing()
 result = defaultdict(counter, current)  # Relies on __call__
 for key, amount in increments:
     result[key] += amount
+
 assert counter.added == 2
 print(result)
+print(f'counter.added: {counter.added}')
