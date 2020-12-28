@@ -51,7 +51,11 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+"""
+Example 1:  Using a function as a hook.   Works well in Python because functions
+are easier to define and functions are first-class objects in Python.   They can be
+passed around and reference like other objects.
+"""
 names = ['Socrates', 'Archimedes', 'Plato', 'Aristotle']
 names.sort(key=len)
 print(names)
@@ -134,7 +138,12 @@ assert counter() == 0
 assert callable(counter)
 
 
-# Example 9
+# Example 9:  Using the __call__ special method.   The idea is that the class will
+# behave as defined by __call__ when it is called as a function.
+# When you need a function to maintain state consider defining a class with a __call__
+# method instead of defining a stateful closure.
+
+
 counter = BetterCountMissing()
 result = defaultdict(counter, current)  # Relies on __call__
 for key, amount in increments:
