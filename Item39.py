@@ -5,23 +5,11 @@ Item 39: Use @classmethod Polymorphism to Construct Objects Generically
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+
 
 # Reproduce book environment
 import random
-random.seed(1234)
+random.seed(12345)
 
 import logging
 from pprint import pprint
@@ -51,93 +39,177 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
-names = ['Socrates', 'Archimedes', 'Plato', 'Aristotle']
-names.sort(key=len)
-print(names)
+# Example 1:   We create common class to represent input data.
+# Note that read is not implemented.   The structure of InputData is put in place/
+# Here just some stuff that we read somehow.
+class InputData:
+    def read(self):
+        raise NotImplementedError
 
 
-# Example 2
-def log_missing():
-    print('Key added')
-    return 0
+# Example 2:  A subclass of input data that reads data froma file on the disk.
+# We pass the InputData class so that PathInput data inherits the structure.
+# Now we define read her. 
+class PathInputData(InputData):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def read(self):
+        with open(self.path) as f:
+            return f.read()
 
 
-# Example 3
-from collections import defaultdict
+# Example 3:  Again we create the structure for a class, Worker.  The function map and self
+# are not implemented.    The can be implemented when we use the workers and data to 
+# map and reduce something.
 
-current = {'green': 12, 'blue': 3}
-increments = [
-    ('red', 5),
-    ('blue', 17),
-    ('orange', 9),
-]
-result = defaultdict(log_missing, current)
-print('Before:', dict(result))
-for key, amount in increments:
-    result[key] += amount
-print('After: ', dict(result))
+class Worker:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
+
+    def map(self):
+        raise NotImplementedError
+
+    def reduce(self, other):
+        raise NotImplementedError
 
 
-# Example 4
-def increment_with_report(current, increments):
-    added_count = 0
+# Example 4:  We pass Worker to LineCountWorker and implement map and reduce to
+# implement a line counter.
+class LineCountWorker(Worker):
+    def map(self):
+        data = self.input_data.read()
+        self.result = data.count('\n')
 
-    def missing():
-        nonlocal added_count  # Stateful closure
-        added_count += 1
-        return 0
-
-    result = defaultdict(missing, current)
-    for key, amount in increments:
-        result[key] += amount
-
-    return result, added_count
+    def reduce(self, other):
+        self.result += other.result
 
 
 # Example 5
-result, count = increment_with_report(current, increments)
-assert count == 2
-print(result)
+import os
+
+def generate_inputs(data_dir):
+    for name in os.listdir(data_dir):
+        yield PathInputData(os.path.join(data_dir, name))
 
 
-# Example 6
-class CountMissing:
-    def __init__(self):
-        self.added = 0
-
-    def missing(self):
-        self.added += 1
-        return 0
+# Example 6:  Now we glue it all together with some helper functions
+def create_workers(input_list):
+    workers = []
+    for input_data in input_list:
+        workers.append(LineCountWorker(input_data))
+    return workers
 
 
-# Example 7
-counter = CountMissing()
-result = defaultdict(counter.missing, current)  # Method ref
-for key, amount in increments:
-    result[key] += amount
-assert counter.added == 2
-print(result)
+# Example 7:  We use threading to break up the effort.
+from threading import Thread
+
+def execute(workers):
+    threads = [Thread(target=w.map) for w in workers]
+    for thread in threads: thread.start()
+    for thread in threads: thread.join()
+
+    first, *rest = workers
+    for worker in rest:
+        first.reduce(worker)
+    return first.result
 
 
-# Example 8
-class BetterCountMissing:
-    def __init__(self):
-        self.added = 0
-
-    def __call__(self):
-        self.added += 1
-        return 0
-
-counter = BetterCountMissing()
-assert counter() == 0
-assert callable(counter)
+# Example 8:  Now we put it all together.
+def mapreduce(data_dir):
+    inputs = generate_inputs(data_dir)
+    workers = create_workers(inputs)
+    return execute(workers)
 
 
-# Example 9
-counter = BetterCountMissing()
-result = defaultdict(counter, current)  # Relies on __call__
-for key, amount in increments:
-    result[key] += amount
-assert counter.added == 2
-print(result)
+# Example 9:  Create some files 100 files each with a randon number of newlines and
+# save them to tmpdir.
+import os
+import random
+
+def write_test_files(tmpdir):
+    os.makedirs(tmpdir)
+    for i in range(100):
+        with open(os.path.join(tmpdir, str(i)), 'w') as f:
+            f.write('\n' * random.randint(0, 100))
+
+tmpdir = 'test_inputs'
+write_test_files(tmpdir)
+
+# We apply mapreduce to tnpdir to count the total number of lines in the files.
+result = mapreduce(tmpdir)
+print(f'There are {result} lines')
+
+
+# Example 10:  The code above works.   But its brittle.   It needs to be rewritten for different
+# input data.   
+class GenericInputData:
+    def read(self):
+        raise NotImplementedError
+
+    @classmethod
+    def generate_inputs(cls, config):
+        raise NotImplementedError
+
+
+# Example 11
+class PathInputData(GenericInputData):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def read(self):
+        with open(self.path) as f:
+            return f.read()
+
+    @classmethod
+    def generate_inputs(cls, config):
+        data_dir = config['data_dir']
+        for name in os.listdir(data_dir):
+            yield cls(os.path.join(data_dir, name))
+
+
+# Example 12:  Here we leave a class without implementation.   Slatkin class this
+# instance method polymorphism.   It is polymorphic this patter allows the class
+# to morph depending the desired behavior.
+class GenericWorker:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
+
+    def map(self):
+        raise NotImplementedError
+
+    def reduce(self, other):
+        raise NotImplementedError
+
+    @classmethod
+    def create_workers(cls, input_class, config):
+        workers = []
+        for input_data in input_class.generate_inputs(config):
+            workers.append(cls(input_data))
+        return workers
+
+
+# Example 13
+class LineCountWorker(GenericWorker):
+    def map(self):
+        data = self.input_data.read()
+        self.result = data.count('\n')
+
+    def reduce(self, other):
+        self.result += other.result
+
+
+# Example 14
+def mapreduce(worker_class, input_class, config):
+    workers = worker_class.create_workers(input_class, config)
+    return execute(workers)
+
+
+# Example 15
+config = {'data_dir': tmpdir}
+result = mapreduce(LineCountWorker, PathInputData, config)
+print(f'There are {result} lines')

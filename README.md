@@ -19,3 +19,7 @@ Item 37 is a good example of the using classes in Python.   The example also usi
 
 
 One nice improvement in the GitHub code is the use of exemption handling (try/except/else) so that the code for each item will run even when the point of the code is to show an error.  It makes sense to leave this out of the book but if you are trying out the code it is nice that the parts with deliberate errors in them are easy to spot and won't crash the rest of the code.  For an example, see Item 13.  Another improvement is that dummy functions and variables left to the imagination in the book are implemented in the GitHub code.  For an example, see Item 10.  Another example of this can be found in Item 30 where the book shows a small snippet of the text for the Gettysburg address.   In the GitHub code, Slatkin includes more of the text so that the item will run.  Throughout, the GitHub code for the book is written so that it will run as is.
+
+EP has some nice items about Python classes.  Item 43 shows that classes can inherit simple functionality directly from container types. It is particularly important to note that by implementing the appropriate dunder methods, abstract classes can inherit the functionality associated with Python build in classes.     For custom container types the collections.abc module will provide all the functionality of a built-in and more container type as long as the required methods are implemented.   
+
+Item 45 discusses the @property decorator.   Nice for making incremental programs towards better data models.

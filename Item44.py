@@ -1,24 +1,15 @@
 """
 Item 44: Use Plain Attributes Instead of Setter and Getter Methods
 
+
+Begins Chapter 6 on Metaclasses and Attributes.   Metaclasses allow the user
+to intercept a class and provide special behavior each time the class is defined.
+
+Define new class interfacess with simple public attributes
+Use @property to define special behavior
+Follow the rule of least surprise.
+Avoid @property for slow or complex work.
 """
-
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Reproduce book environment
 import random
 random.seed(1234)
@@ -51,7 +42,8 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  You can create get and set methods for your classes.   This is simple
+# but not Pythonic.
 class OldResistor:
     def __init__(self, ohms):
         self._ohms = ohms
@@ -63,25 +55,26 @@ class OldResistor:
         self._ohms = ohms
 
 
-# Example 2
+# Example 2: Code looks awkward here.
 r0 = OldResistor(50e3)
 print('Before:', r0.get_ohms())
 r0.set_ohms(10e3)
 print('After: ', r0.get_ohms())
 
 
-# Example 3
+# Example 3:  And here.
 r0.set_ohms(r0.get_ohms() - 4e3)
 assert r0.get_ohms() == 6e3
 
 
-# Example 4
+# Example 4:   Better methond is to start with simple public attributes.
 class Resistor:
     def __init__(self, ohms):
         self.ohms = ohms
         self.voltage = 0
         self.current = 0
 
+# Operations are now simple and clear.
 r1 = Resistor(50e3)
 r1.ohms = 10e3
 print(f'{r1.ohms} ohms, '
@@ -93,7 +86,8 @@ print(f'{r1.ohms} ohms, '
 r1.ohms += 5e3
 
 
-# Example 6
+# Example 6:  For special behavior when an attribute is set use the @property decorator.
+# Here we implement the setter behavior.
 class VoltageResistance(Resistor):
     def __init__(self, ohms):
         super().__init__(ohms)
@@ -116,7 +110,8 @@ r2.voltage = 10
 print(f'After:  {r2.current:.2f} amps')
 
 
-# Example 8
+# Example 8:  Along with the setter behavior we can implement other behavior.   Here we check
+# that the resistor values are not negative and throw an exception if they are.
 class BoundedResistance(Resistor):
     def __init__(self, ohms):
         super().__init__(ohms)
@@ -151,7 +146,7 @@ else:
     assert False
 
 
-# Example 11
+# Example 11:  We can make an attribute from a parent class immutable.
 class FixedResistance(Resistor):
     def __init__(self, ohms):
         super().__init__(ohms)
@@ -177,7 +172,8 @@ else:
     assert False
 
 
-# Example 13
+# Example 13:  Be careful not to implement surprising behavior.  
+# For example to set other attributes in getter @property methods.
 class MysteriousResistor(Resistor):
     @property
     def ohms(self):

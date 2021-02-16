@@ -1,29 +1,21 @@
 """
 Item 43: Inherit from collections.abc for Custom Container Types
 
+The built-in collections.abc module provides a custom class with the typical methods used by Python container types (lists, sets, tuples, and dictionaries)
+
+To obtain all the usual methods both __getitem__ and __len__ must be implemented.
+See:  https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence
+
+Many other abstract base classes can be implemented.
+See:  https://docs.python.org/3/library/collections.abc.html#collections-abstract-base-classes
+
+
 """
-
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Reproduce book environment
 import random
 random.seed(1234)
 
-import logging
+import logging # Used for exception handling
 from pprint import pprint
 from sys import stdout as STDOUT
 
@@ -57,14 +49,19 @@ class FrequencyList(list):
         super().__init__(members)
 
     def frequency(self):
+
+        """builds a dictionary of the frequency of each item in a list."""
+
         counts = {}
         for item in self:
             counts[item] = counts.get(item, 0) + 1
         return counts
 
 
-# Example 2
+# Example 2:  By subclassing list we get all the list's standard functionality
 foo = FrequencyList(['a', 'b', 'a', 'c', 'b', 'a', 'd'])
+help(FrequencyList.frequency)
+print(f'foo.frequency {foo.frequency.__doc__}')
 print('Length is', len(foo))
 foo.pop()
 print('After pop:', repr(foo))
@@ -88,8 +85,8 @@ bar[0]
 bar.__getitem__(0)
 
 
-# Example 6
-class IndexableNode(BinaryNode):
+# Example 6:  To get a custom class to behave like a sequence you can implement the __getitem__ dunder method
+class IndexableNode(BinaryNode):  # Traverses tree depth first
     def _traverse(self):
         if self.left is not None:
             yield from self.left._traverse()
@@ -118,7 +115,8 @@ tree = IndexableNode(
         left=IndexableNode(11)))
 
 
-# Example 8
+# Example 8:   Sequence indexings is available and the in operator works.
+print(tree)
 print('LRR is', tree.left.right.right.value)
 print('Index 0 is', tree[0])
 print('Index 1 is', tree[1])
@@ -134,7 +132,7 @@ else:
     assert False
 
 
-# Example 9
+# Example 9:  Note that other list semantics are unavailable.   Here len does not work.
 try:
     len(tree)
 except:
@@ -143,9 +141,9 @@ else:
     assert False
 
 
-# Example 10
+# Example 10: One solution is to simply implement the dunder method for the functionality you want.
 class SequenceNode(IndexableNode):
-    def __len__(self):
+    def __len__(self):  # We implement __len__ for our tree.
         for count, _ in enumerate(self._traverse(), 1):
             pass
         return count
@@ -178,7 +176,8 @@ else:
     assert False
 
 
-# Example 13
+# Example 13:  By inheriting from Sequence in the collections.abc build in module and implemented
+# the right dunder methods all the other methods will be provided.
 try:
     from collections.abc import Sequence
     
@@ -192,7 +191,7 @@ else:
     assert False
 
 
-# Example 14
+# Example 14:
 class BetterNode(SequenceNode, Sequence):
     pass
 
@@ -209,5 +208,14 @@ tree = BetterNode(
         left=BetterNode(11))
 )
 
+# Now we get the index and count methods for free.
 print('Index of 7 is', tree.index(7))
 print('Count of 10 is', tree.count(10))
+
+"""
+Note that for more complex container types like Set and MutableMapping there are a large
+number of special method that need to be implemented to match Python conventions.  
+
+These ideas go beyond the collections.abc module.   Python uses a variety of special methods for 
+comparisons and sorting.
+"""

@@ -1,29 +1,15 @@
+#!/usr/bin/env PYTHONHASHSEED=1234 python3
+
 """
 Item 42: Prefer Public Attributes Over Private Ones
 
 """
 
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Reproduce book environment
 import random
 random.seed(1234)
 
-import logging
+import logging # Used for exception handling
 from pprint import pprint
 from sys import stdout as STDOUT
 
@@ -50,8 +36,17 @@ def close_open_files():
 
 atexit.register(close_open_files)
 
+"""
+There are only two types of visibility in Python for class attributes: public and private
+Some things to remember:
+Private atrributes are not rigorously enforced.
+Use the documentation for protected fields rather than trying to control access with private
+attributes.
+Use private attributes only to control naming conflicts.
+Document protected fields carefully.
 
-# Example 1
+"""
+# Example 1:  Indicate a private field by prefixed it with a double underscore.
 class MyObject:
     def __init__(self):
         self.public_field = 5
@@ -61,16 +56,16 @@ class MyObject:
         return self.__private_field
 
 
-# Example 2
+# Example 2:  Public attributes can be directly accessed by anyone
 foo = MyObject()
 assert foo.public_field == 5
 
 
-# Example 3
+# Example 3:  Note that the foo class has access to its own private field
 assert foo.get_private_field() == 10
 
 
-# Example 4
+# Example 4:  You cannot access a private field directly from outside the class.
 try:
     foo.__private_field
 except:
@@ -92,7 +87,7 @@ bar = MyOtherObject()
 assert MyOtherObject.get_private_field_of_instance(bar) == 71
 
 
-# Example 6
+# Example 6:  A subclass cannot access its parent class's private fields
 try:
     class MyParentObject:
         def __init__(self):
@@ -110,11 +105,13 @@ else:
     assert False
 
 
-# Example 7
+# Example 7:   Note that the reason that the subclass access to a private field fails
+# is that the field is prefix with the name of the class it was created in.
+# Understanding this makes it is to access a parent class's private field if you need to.
 assert baz._MyParentObject__private_field == 71
 
 
-# Example 8
+# Example 8:  Shows how the private fiels attributes are stored
 print(baz.__dict__)
 
 
@@ -156,7 +153,7 @@ class MyIntegerSubclass(MyStringClass):
         return int(self._MyStringClass__value)  # Not updated
 
 
-# Example 12
+# Example 12:  Problem with private field renamed by subclasses.
 try:
     foo = MyIntegerSubclass(5)
     foo.get_value()
@@ -185,7 +182,8 @@ foo = MyIntegerSubclass(5)
 assert foo.get_value() == 5
 
 
-# Example 14
+# Example 14:   Use private fields only when you are concerned that names will conflict because a 
+# particular name is commonly used.
 class ApiClass:
     def __init__(self):
         self._value = 5
@@ -198,5 +196,25 @@ class Child(ApiClass):
         super().__init__()
         self._value = 'hello'  # Conflicts
 
+# Example 15: Use the double underscore and a private attribute to avoid a nameing conflict.
+# This can be useful when working with unknown API's and common using common names.
 a = Child()
 print(f'{a.get()} and {a._value} should be different')
+
+class ApiClass:
+    def __init__(self):
+        self.__value = 5 # double underscore
+
+    def get(self):
+        return self.__value
+
+class Child(ApiClass):
+    def __init__(self):
+        super().__init__()
+        self._value = 'hello'  # Conflicts
+
+a = Child()
+print(f'{a.get()} and {a._value} should be different')
+
+#  We can access the "private" attribute directly.
+print(f'a._ApiClass__value is {a._ApiClass__value} just like a.get()!')

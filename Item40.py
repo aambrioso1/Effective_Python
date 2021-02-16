@@ -5,20 +5,6 @@ Item 40:  Initialize Parent Classes with Super
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 # Reproduce book environment
 import random
 random.seed(1234)
@@ -51,7 +37,8 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  The "old, simple way to initalize a parent class from a child class" is to use the parent
+# class's __init__. 
 class MyBaseClass:
     def __init__(self, value):
         self.value = value
@@ -98,12 +85,13 @@ class AnotherWay(MyBaseClass, PlusFive, TimesTwo):
         PlusFive.__init__(self)
 
 
-# Example 6
+# Example 6:  You might expect to get 35 based on the order 
+# given in the class call:  PlusFive followed by TimesTwo.
 bar = AnotherWay(5)
-print('Second ordering value is', bar.value)
+print('Second ordering value is give 5 + 2 * 5 =', bar.value)
 
 
-# Example 7
+# Example 7:
 class TimesSeven(MyBaseClass):
     def __init__(self, value):
         MyBaseClass.__init__(self, value)
@@ -125,7 +113,8 @@ foo = ThisWay(5)
 print('Should be (5 * 7) + 9 = 44 but is', foo.value)
 
 
-# Example 9
+# Example 9:  To avoid this problem Python has the super built-in function
+# and MRO (standard method resolution order).
 class MyBaseClass:
     def __init__(self, value):
         self.value = value
@@ -141,7 +130,8 @@ class PlusNineCorrect(MyBaseClass):
         self.value += 9
 
 
-# Example 10
+# Example 10:  The ordering in the call seems incorrect.  However it follows
+# the MRO standard which is opposite the call to __init__.
 class GoodWay(TimesSevenCorrect, PlusNineCorrect):
     def __init__(self, value):
         super().__init__(value)
@@ -150,12 +140,17 @@ foo = GoodWay(5)
 print('Should be 7 * (5 + 9) = 98 and is', foo.value)
 
 
-# Example 11
+# Example 11:  This code shows off the MRO method to
+# check the ordering defined by a class.
 mro_str = '\n'.join(repr(cls) for cls in GoodWay.mro())
-print(mro_str)
+print(f'mro_str is {mro_str}')
 
 
-# Example 12
+# Example 12:  Two parameters can be used: (1) the class whose MRO parent 
+# we are trying to access and (2) the instance on which to access the view.
+# These options are not required and should usually be left out.
+# The only time to used them is to access specific functionality
+# of a super-class's implementation from a child class.
 class ExplicitTrisect(MyBaseClass):
     def __init__(self, value):
         super(ExplicitTrisect, self).__init__(value)

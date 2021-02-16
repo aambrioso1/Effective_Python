@@ -1,23 +1,12 @@
 """
 Item 45: Consider @property Instead of Refactoring Attributes
 
+The @property decorator allows you to improve an interface without having to rewrite the code.
+Use the @property decorator to give existing instance attributes new functionality.
+Use @property to make incremental programs toward better data models.
+If you are using @property heavily consider refactoring your class.
+
 """
-
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # Reproduce book environment
 import random
@@ -51,7 +40,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  We create a leaky bucket quota class.
 from datetime import datetime, timedelta
 
 class Bucket:
@@ -109,7 +98,8 @@ else:
 print(bucket)
 
 
-# Example 7
+# Example 7:  We add functionality using the @property decorator.   We
+# will keep track of the max_quota issued in a period and the quota_consumed in the period.
 class NewBucket:
     def __init__(self, period):
         self.period_delta = timedelta(seconds=period)

@@ -5,19 +5,6 @@ Item 38:  Accept Functions Instead of Classes for Simple Interfaces
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # Reproduce book environment
 import random
@@ -53,8 +40,8 @@ atexit.register(close_open_files)
 
 """
 Example 1:  Using a function as a hook.   Works well in Python because functions
-are easier to define and functions are first-class objects in Python.   They can be
-passed around and reference like other objects.
+are easy to define and because they are first-class objects in Python.   They can be
+passed around and referenced like other objects.
 """
 names = ['Socrates', 'Archimedes', 'Plato', 'Aristotle']
 names.sort(key=len)
@@ -75,6 +62,9 @@ increments = [
     ('red', 5),
     ('blue', 17),
     ('orange', 9),
+    ('blue', 3),
+    ('violet', 1),
+    ('white', 2),
 ]
 result = defaultdict(log_missing, current)
 print('Before:', dict(result))
@@ -101,7 +91,7 @@ def increment_with_report(current, increments):
 
 # Example 5
 result, count = increment_with_report(current, increments)
-assert count == 2
+assert count == 4
 print(result)
 
 
@@ -120,7 +110,7 @@ counter = CountMissing()
 result = defaultdict(counter.missing, current)  # Method ref
 for key, amount in increments:
     result[key] += amount
-assert counter.added == 2
+assert counter.added == 4
 print(result)
 
 
@@ -138,17 +128,20 @@ assert counter() == 0
 assert callable(counter)
 
 
-# Example 9:  Using the __call__ special method.   The idea is that the class will
-# behave as defined by __call__ when it is called as a function.
+# Example 9:  Shows the __call__ special method.   The idea is that the class will
+# behave as defined by the __call__ special methond when it is called as a function.
 # When you need a function to maintain state consider defining a class with a __call__
-# method instead of defining a stateful closure.
+# method instead of defining a stateful closure.  In other words, since a instance of
+# a class will hold on to its state.
 
 
 counter = BetterCountMissing()
 result = defaultdict(counter, current)  # Relies on __call__
+print(f'current = {current}')
+print(f'increments = {increments}')
 for key, amount in increments:
     result[key] += amount
 
-assert counter.added == 2
-print(result)
+assert counter.added == 4
+print(f'result = {result}')
 print(f'counter.added: {counter.added}')
