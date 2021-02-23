@@ -98,8 +98,8 @@ else:
 print(bucket)
 
 
-# Example 7:  We add functionality using the @property decorator.   We
-# will keep track of the max_quota issued in a period and the quota_consumed in the period.
+# Example 7:  We add functionality using the @property decorator.   We'll 
+# keep track of the max_quota issued and the quota_consumed in the period.
 class NewBucket:
     def __init__(self, period):
         self.period_delta = timedelta(seconds=period)
