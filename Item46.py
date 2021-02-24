@@ -38,7 +38,8 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  Examples 1 to 4 show a that @property decorator is tedious because code is not reusable.
+# Each new property must be adding again even though the method _check_grade is the same.
 class Homework:
     def __init__(self):
         self._grade = 0
@@ -101,7 +102,9 @@ assert galileo.writing_grade == 85
 assert galileo.math_grade == 99
 
 
-# Example 5
+print('\n'+10*'*'+'Code in asterisk block is a first try but doesn\'t work'+10*'*')
+
+# Example 5:  
 class Grade:
     def __get__(self, instance, instance_type):
         pass
@@ -133,7 +136,7 @@ exam.writing_grade
 Exam.__dict__['writing_grade'].__get__(exam, Exam)
 
 
-# Example 10
+# Example 10:    
 class Grade:
     def __init__(self):
         self._value = 0
@@ -168,11 +171,15 @@ print(f'Second {second_exam.writing_grade} is right')
 print(f'First  {first_exam.writing_grade} is wrong; '
       f'should be 82')
 
+print(74*'*','\n')
 
-# Example 13
+# Example 13:  The problem is that a single Grade instance is constructed once and 
+# shared across all the Exam instances.  To solve this problem the Grade class needs
+# to keep track of its value for each Exam instance.  
+
 class Grade:
     def __init__(self):
-        self._values = {}
+        self._values = {} # Defines the dictionary used to keep track of values for Exam instances.
 
     def __get__(self, instance, instance_type):
         if instance is None:
@@ -186,7 +193,10 @@ class Grade:
         self._values[instance] = value
 
 
-# Example 14
+# Example 14:  The implimentation in Example 13 leaks memory.   The solutilns it use the WeakKeyDictionary 
+# in the weakref built-in module.   The makes sure _values dictionary will be empty when Exam instances are
+# no longer in use.
+
 from weakref import WeakKeyDictionary
 
 class Grade:

@@ -48,7 +48,8 @@ class LazyRecord:
         return value
 
 
-# Example 2
+# Example 2:  This example illustrates that if an attribute can't be found, foo in example,
+# the __getattr__ method will be called.   The acts as hook to allow the missing attribute to be defined.
 data = LazyRecord()
 print('Before:', data.__dict__)
 print('foo:   ', data.foo)
@@ -64,10 +65,16 @@ class LoggingLazyRecord(LazyRecord):
         print(f'* Returning {result!r}')
         return result
 
+# Added code here to show that __getattr__ is called once for each new attribute.
+# After the first call the each attribute is added to the dictionary and __getattr__
+# is no longer used.
 data = LoggingLazyRecord()
 print('exists:     ', data.exists)
-print('First foo:  ', data.foo)
-print('Second foo: ', data.foo)
+print('First foo:  ', data.foo1)
+print('First foo again', data.foo1)
+print('Second foo: ', data.foo2)
+print('Second foo again: ', data.foo2)
+print('After: ', data.__dict__)
 
 
 # Example 4
@@ -92,7 +99,7 @@ print('exists:     ', data.exists)
 print('First foo:  ', data.foo)
 print('Second foo: ', data.foo)
 
-
+"""
 # Example 5
 try:
     class MissingPropertyRecord:
@@ -184,3 +191,5 @@ class DictionaryRecord:
 
 data = DictionaryRecord({'foo': 3})
 print('foo: ', data.foo)
+
+"""
