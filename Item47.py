@@ -1,6 +1,11 @@
 """
 Item 47: Use __getattr__, __getattribute__, and __set__attr__ for Lazy Attributes
 
+Use __getattr__ and __setattr__ to lazily load and save attributes for an object.
+Understand __getattr__ only gets called when accessing a missing attribute while
+__getattribute__ gets called every time any attribute is accessed.
+Use methods from super(), the object class, to access instance attributes.
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -66,7 +71,7 @@ class LoggingLazyRecord(LazyRecord):
         return result
 
 # Added code here to show that __getattr__ is called once for each new attribute.
-# After the first call the each attribute is added to the dictionary and __getattr__
+# After the first call the attribute is added to the dictionary and __getattr__
 # is no longer used.
 data = LoggingLazyRecord()
 print('exists:     ', data.exists)
@@ -77,7 +82,10 @@ print('Second foo again: ', data.foo2)
 print('After: ', data.__dict__)
 
 
-# Example 4
+# Example 4:  The __getattribute__ object hook is called every time an attribute is accessed
+# on an object even where it does not exist in the attribute dictionary.
+# This allows hte coded to check global transaction states.
+# The operation can impact performance.
 class ValidatingRecord:
     def __init__(self):
         self.exists = 5
@@ -99,8 +107,8 @@ print('exists:     ', data.exists)
 print('First foo:  ', data.foo)
 print('Second foo: ', data.foo)
 
-"""
-# Example 5
+
+# Example 5:  Raise an exception if a property should not exist.
 try:
     class MissingPropertyRecord:
         def __getattr__(self, name):
@@ -119,7 +127,8 @@ else:
     assert False
 
 
-# Example 6
+# Example 6;  Use hasattr built-in function to determine when a property exists 
+# and the getattr built-in function to retrieve property values
 data = LoggingLazyRecord()  # Implements __getattr__
 print('Before:         ', data.__dict__)
 print('Has first foo:  ', hasattr(data, 'foo'))
@@ -127,13 +136,20 @@ print('After:          ', data.__dict__)
 print('Has second foo: ', hasattr(data, 'foo'))
 
 
-# Example 7
+# Example 7:  When __getattribute__ is implemented the class will call the method
+# each time hasattr or getattr is used with an instance.
 data = ValidatingRecord()  # Implements __getattribute__
 print('Has first foo:  ', hasattr(data, 'foo'))
 print('Has second foo: ', hasattr(data, 'foo'))
+print('Has foobar: ', hasattr(data, 'foobar'))
+print('Has first foo:  ', hasattr(data, 'foo'))
+print('First foobar:  ', data.foobar)
+print('Has first foobar:  ', hasattr(data, 'foo'))
+print('Dict after:         ', data.__dict__)
+print(20*'*')
 
-
-# Example 8
+# Example 8:  Since the __setattr__ method is always called when an attribute is assigned to an instance
+# it can be used as a hook to push data back to a database when values are assigned to the instance.
 class SavingRecord:
     def __setattr__(self, name, value):
         # Save some data for the record
@@ -141,7 +157,7 @@ class SavingRecord:
         super().__setattr__(name, value)
 
 
-# Example 9
+# Example 9:  Here __setattr__ is called on each attribute assignment.
 class LoggingSavingRecord(SavingRecord):
     def __setattr__(self, name, value):
         print(f'* Called __setattr__({name!r}, {value!r})')
@@ -155,7 +171,8 @@ data.foo = 7
 print('Finally:', data.__dict__)
 
 
-# Example 10
+# Example 10: The __getattribute__ method here causes an infinite recursion since the method
+# accesses self.data which cause _getattribute__ to run again.
 class BrokenDictionaryRecord:
     def __init__(self, data):
         self._data = {}
@@ -175,7 +192,7 @@ else:
     assert False
 
 
-# Example 12
+# Example 12:  To avoid the recursion use super().__getattribute__ .
 class DictionaryRecord:
     def __init__(self, data):
         self._data = data
@@ -191,5 +208,3 @@ class DictionaryRecord:
 
 data = DictionaryRecord({'foo': 3})
 print('foo: ', data.foo)
-
-"""
