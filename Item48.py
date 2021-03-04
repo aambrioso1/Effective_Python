@@ -3,6 +3,16 @@ Item 48: Validate Subclasses with __init_subclass__
 
 """
 
+"""
+Metaclasses can be used to inspect or modify a class after it's defined but before its
+created.   Can be more heavyweight than needed
+The __init_subclass__ method introduced in Python 3.6 ensures that subclasses are well-formed
+at the time they are defined and before their type are constructed.
+Be sure to call super()__init_subclass__ from within your classes's __init_subclass__ definition 
+to ennable validation in multiple layers of classes and multiple inheritance.
+
+"""
+
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
 # Reproduce book environment
@@ -37,7 +47,8 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  Shows that the metaclass has access to class and parent class information as each is
+# created.
 class Meta(type):
     def __new__(meta, name, bases, class_dict):
         global print
@@ -60,9 +71,11 @@ class MySubclass(MyClass):
 
     def bar(self):
         pass
+print(30*'*')
 
+# Example 2:  We use metaclass to validate all parameters of an associated class before its defined.
+# In the example we verify that the child of the Polygon class has at least 3 sides.
 
-# Example 2
 class ValidatePolygon(type):
     def __new__(meta, name, bases, class_dict):
         # Only validate subclasses of the Polygon class
@@ -90,7 +103,7 @@ class Nonagon(Polygon):
 assert Triangle.interior_angles() == 180
 assert Rectangle.interior_angles() == 360
 assert Nonagon.interior_angles() == 1260
-
+print(f'Nonagon.interior_angles() = {Nonagon.interior_angles()}')
 
 # Example 3
 try:
@@ -107,8 +120,10 @@ except:
 else:
     assert False
 
+print(30*'*')
 
-# Example 4
+# Example 4:  A better and simpler way to accomplish this task with Python 3.6+ is to use the 
+# __init_subclass__ special class method.   
 class BetterPolygon:
     sides = None  # Must be specified by subclasses
 
@@ -140,8 +155,12 @@ except:
 else:
     assert False
 
+print(30*'*')
 
-# Example 6
+# Example 6:  This example adds a second metaclass to show that you can only specify
+# one metaclass per class definition.  In the example we use a second metaclass to check if the polygon
+# is filled with the right color.
+
 class ValidateFilled(type):
     def __new__(meta, name, bases, class_dict):
         # Only validate subclasses of the Filled class
@@ -154,7 +173,7 @@ class Filled(metaclass=ValidateFilled):
     color = None  # Must be specified by subclasses
 
 
-# Example 7
+# Example 7:  This returns a cryptic error message because we are using two metaclasses.
 try:
     class RedPentagon(Filled, Polygon):
         color = 'blue'
@@ -165,7 +184,7 @@ else:
     assert False
 
 
-# Example 8
+# Example :  We can fix the problem with a complex heirarchy of metaclass type definitions.
 class ValidatePolygon(type):
     def __new__(meta, name, bases, class_dict):
         # Only validate non-root classes
@@ -221,9 +240,12 @@ except:
 else:
     assert False
 
+print(30*'*')
 
-# Example 12
-class Filled:
+# Example 12:  Using the special __init_subclass__ and super() we can solve the problem, allow composibility,
+# and reduce the complexity of the code.
+
+class Filled: 
     color = None  # Must be specified by subclasses
 
     def __init_subclass__(cls):
@@ -232,7 +254,9 @@ class Filled:
             raise ValueError('Fills need a valid color')
 
 
-# Example 13
+# Example 13:  Now the classes Filled and BetterPolygon can be composed to create polygon classes with appropriate
+# validation and easier clearer code.
+
 class RedTriangle(Filled, BetterPolygon):
     color = 'red'
     sides = 3
@@ -272,7 +296,10 @@ else:
     assert False
 
 
-# Example 16
+# Example 16:   The __init_subclass__ method also works in complex cases like diamond inheritance.
+# Top, Left, Right, and Bottom form and diamond inheritance pattern.   But Top._init_subclass__ is 
+# only class once when each child class is created.
+
 class Top:
     def __init_subclass__(cls):
         super().__init_subclass__()

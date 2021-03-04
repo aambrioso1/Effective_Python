@@ -172,7 +172,7 @@ print('Finally:', data.__dict__)
 
 
 # Example 10: The __getattribute__ method here causes an infinite recursion since the method
-# accesses self.data which cause _getattribute__ to run again.
+# accesses self.data which cause _getattribute__ to run again and again.
 class BrokenDictionaryRecord:
     def __init__(self, data):
         self._data = {}
