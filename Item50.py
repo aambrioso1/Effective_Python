@@ -36,8 +36,21 @@ def close_open_files():
 
 atexit.register(close_open_files)
 
+"""
+A useful feature of metaclasses is that metaclasses allow one to modify or annotate properties of a class after
+the class is defined but before it is used.   For this approach we used descriptors.  A descriptor class can
+provide __get__ and __set__ methods.
 
-# Example 1
+Metaclasses allow you to modify class attributes before the class is fully defined.
+Descriptors and metaclasses allow for declarative behavorior and runtime inttrospection.
+Define __set_name__ on your descriptor classs to allow them to take into account their surrounding 
+class and property names.
+Avoid memory leaks with the weakref built-in module by having descriptors store data they manipulation 
+directly within a class's instance dictionary.
+"""
+
+
+# Example 1:  
 class Field:
     def __init__(self, name):
         self.name = name
@@ -76,8 +89,15 @@ class Customer:
     prefix = Field('prefix')
     suffix = Field('suffix')
 
+print(20*'*')
 
-# Example 5
+# Example 5:  The above is redundant since the name of the class is given in the name of the field (left-side).
+"""
+ We use a metaclass to avoid this problem.  The metaclass will allow us to hook the class statement directly.
+
+""" 
+
+
 class Meta(type):
     def __new__(meta, name, bases, class_dict):
         for key, value in class_dict.items():
@@ -88,12 +108,12 @@ class Meta(type):
         return cls
 
 
-# Example 6
+# Example 6:  Database rows sholuld inherit from Meta
 class DatabaseRow(metaclass=Meta):
     pass
 
 
-# Example 7
+# Example 7:   We adjust the Field class so that the name can be assigned when a field instance is created
 class Field:
     def __init__(self):
         # These will be assigned by the metaclass.
@@ -124,7 +144,7 @@ cust.first_name = 'Euler'
 print(f'After:  {cust.first_name!r} {cust.__dict__}')
 
 
-# Example 10
+# Example 10:  Must inherit from DatabaseRow or code will break.
 try:
     class BrokenCustomer:
         first_name = Field()
@@ -140,7 +160,7 @@ else:
     assert False
 
 
-# Example 11
+# Example 11:   The solution is to use the __set_name__ special method for descriptors.
 class Field:
     def __init__(self):
         self.name = None
@@ -160,7 +180,7 @@ class Field:
         setattr(instance, self.internal_name, value)
 
 
-# Example 12
+# Example 12:  Now it works with having to inherit from a specific parent class or having to use a metaclass.
 class FixedCustomer:
     first_name = Field()
     last_name = Field()
