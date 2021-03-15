@@ -3,6 +3,12 @@ Item 51: Prefer Class Decorators Over Metaclasses for Composable Class Extension
 
 """
 
+"""
+
+
+"""
+
+
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
 # Reproduce book environment
@@ -37,7 +43,9 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+
+# Example 1:  Create a decorator that adds a helper to all the methods in a class that prints arguments,
+# returns vallues, and exceptions raised.
 from functools import wraps
 
 def trace_func(func):
@@ -61,7 +69,7 @@ def trace_func(func):
     return wrapper
 
 
-# Example 2
+# Example 2:  We use the decorator
 class TraceDict(dict):
     @trace_func
     def __init__(self, *args, **kwargs):
@@ -87,8 +95,12 @@ except KeyError:
 else:
     assert False
 
+print(20*'*')  # The print statements help break up the examples.  So the output for the examples is separated.
 
-# Example 4
+# Example 4:   The example above has redundant code and changes to the dict superclass won't be decorated unless
+# we add code to trace. 
+# One way to solve this problem is with metaclasses.
+
 import types
 
 trace_types = (
@@ -112,7 +124,9 @@ class TraceMeta(type):
         return klass
 
 
-# Example 5
+# Example 5:   This example using the TraceMeta metaclass to avoid the redundate code.
+# But won't work if a superclass has already already has a specified metaclass.
+
 class TraceDict(dict, metaclass=TraceMeta):
     pass
 
@@ -142,8 +156,9 @@ except:
 else:
     assert False
 
+print(20*'*')
 
-# Example 7
+# Example 7:   We solve this problem having OtherMeta inherit from TraceMeta
 class TraceMeta(type):
     def __new__(meta, name, bases, class_dict):
         klass = type.__new__(meta, name, bases, class_dict)
@@ -156,13 +171,13 @@ class TraceMeta(type):
 
         return klass
 
-class OtherMeta(TraceMeta):
+class OtherMeta(TraceMeta): # OtherMeta inherits from TraceMeta
     pass
 
 class SimpleDict(dict, metaclass=OtherMeta):
     pass
 
-class TraceDict(SimpleDict, metaclass=TraceMeta):
+class TraceDict(SimpleDict, metaclass=TraceMeta): # Also TraceDict inherits from TraceMeta
     pass
 
 trace_dict = TraceDict([('hi', 1)])
@@ -175,8 +190,17 @@ except KeyError:
 else:
     assert False
 
+print(20*'*')
 
-# Example 8
+# Example 8:  The solutions above won't work if the other metaclass can't be modified or if 
+# we used multiple utility metaclasses at the same time.   Metaclasses put too many constraints
+# on the class that's being modified.
+
+# We implement a class decorator to a apply "trace_func to all the methods and function of a class by
+# moving the core of the TraceMethod.__new__ method to a stand-alone function."
+# The code is much shorter too.
+
+
 def my_class_decorator(klass):
     klass.extra_param = 'hello'
     return klass
@@ -198,8 +222,7 @@ def trace(klass):
             setattr(klass, key, wrapped)
     return klass
 
-
-# Example 10
+# Example 10:
 @trace
 class TraceDict(dict):
     pass
@@ -215,8 +238,8 @@ else:
     assert False
 
 
-# Example 11
-class OtherMeta(type):
+# Example 11:  It works when the class class being decorated alread has a metaclass.
+class OtherMeta(type): # A dummy metaclass for testing
     pass
 
 @trace
