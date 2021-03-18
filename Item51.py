@@ -4,7 +4,12 @@ Item 51: Prefer Class Decorators Over Metaclasses for Composable Class Extension
 """
 
 """
+" A class decorator is a simple function that recieves a class instance as a parameter and returns 
+either a new class or a modified version of the original class."
 
+"Class decorators are useful if you want to modify every method or attribute of a class."
+
+Metaclasses do not compose well.   Decorators do.
 
 """
 
