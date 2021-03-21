@@ -4,10 +4,13 @@ Item 54: Use Lock to Prevent Data Races in Threads
 """
 
 """
-The GIL does not protect against data races between threads.   The program must do this.
+The GIL does not protect racing data between threads.   The programmer must do this.
 Data structures can be corrupted if you allow multiple threads to modify the same objects
 with mutual-exclusion locks (mutexes)
 The Lock class from the threading built-in module will prevent this kind of data corruption.
+
+The code shows what can go wrong and how to fix the problem with an example simulating sensor being monitored 
+on multiple threads running in parallel.
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -91,7 +94,7 @@ found = counter.count
 print(f'Counter should be {expected}, got {found}')
 
 
-# Example 4:   This line of code operates as shown in example 5.   Python threads can be interupted
+# Example 4:   This line of code operates as shown in example 5.   Python threads can be interrupted
 # between the operation show in example 5.
 counter.count += 1
 
