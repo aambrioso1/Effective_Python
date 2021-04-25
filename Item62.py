@@ -1,23 +1,24 @@
 """
 Item 62: Mix Threads and Coroutines to Ease Transition to asyncio
 
+To transition a large program to asynchio and coroutines it may be necessary to use threads for blocking I/O
+and coroutines for asynchronous I/O at the same time.
+The asyncio module has "built-in facilties that make this interoperability straightforward.""
+
+The run_in_executor mehtod event loop enables synchronous code to run a coroutine in ThreadPoolExectuor
+pools.   This helps top-down migrations.
+
+THe run_until_complete mehtod enoalbes synchronous code to run a coroutine until it finishes.   The 
+asychio.run_coroutine_threadsafe function provies the same functionality across thread boundaries.
+These help with bottom-up migrations.
+
+
 """
+
+
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # Reproduce book environment
 import random
@@ -39,6 +40,7 @@ atexit.register(TEST_DIR.cleanup)
 
 # Make sure Windows processes exit cleanly
 OLD_CWD = os.getcwd()
+print(f'{OLD_CWD=}')
 atexit.register(lambda: os.chdir(OLD_CWD))
 os.chdir(TEST_DIR.name)
 
@@ -51,8 +53,8 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
-class NoNewData(Exception):
+# Example 1: We want to merge a log files so we need to check if new data is available and return the next line of input
+class NoNewData(Exception):  # We use this exception to let us know there is no new data (See Item 20).
     pass
 
 def readline(handle):
@@ -67,25 +69,25 @@ def readline(handle):
     return handle.readline()
 
 
-# Example 2
+# Example 2:  We wrap the funciton above in a while loop so we can turn it into a worker thread.
 import time
 
 def tail_file(handle, interval, write_func):
-    while not handle.closed:
+    while not handle.closed:  # Worker thread exits when handle is closed.
         try:
-            line = readline(handle)
+            line = readline(handle) 
         except NoNewData:
-            time.sleep(interval)
+            time.sleep(interval) # Wait if there is no data
         else:
-            write_func(line)
+            write_func(line) # Callback function to write line to output log (See Item 38).
 
 
-# Example 3
+# Example 3:  Start one worker per input files and unify their output into a single file.
 from threading import Lock, Thread
 
 def run_threads(handles, interval, output_path):
     with open(output_path, 'wb') as output:
-        lock = Lock()
+        lock = Lock() # Need the lock so that writes to output stream will be in order (serialized).
         def write(data):
             with lock:
                 output.write(data)
@@ -102,7 +104,7 @@ def run_threads(handles, interval, output_path):
 
 
 # Example 4
-# This is all code to simulate the writers to the handles
+# This is code to simulate the writers to the handles
 import collections
 import os
 import random
@@ -172,9 +174,9 @@ def confirm_merge(input_paths, output_path):
         assert expected_lines == found_lines, \
             f'{expected_lines!r} == {found_lines!r}'
 
-input_paths = ...
-handles = ...
-output_path = ...
+input_paths = ... # ['Item1.py', 'Item2.py', 'Item3.py', 'Item4.py']
+handles = ... # ['Item1.py', 'Item2.py', 'Item3.py', 'Item4.py']
+output_path = ... # ['file1', 'file2']
 
 tmpdir, input_paths, handles, output_path = setup()
 
@@ -194,6 +196,17 @@ import asyncio
 # instead. See: https://bugs.python.org/issue33792
 policy = asyncio.get_event_loop_policy()
 policy._loop_factory = asyncio.SelectorEventLoop
+
+"""
+Top-down approach:
+(1)  Change top function to asynch def
+(2)  Wrap all functions that do I/O to use aynchio.run_in_executor.
+(3)  Make sure resources and callbacks used run_in_executor are synchronized
+using Lock or asynchio.run_time_coroutine_threadsafe.
+(4)  Try to eliminate get_event_loop and run_in_executor clall by moving down through
+the call hierarchy and converting intermediate functions and methods to coroutines following s
+steps 1, 2, and 3.  (EP, p. 284-85)
+"""
 
 async def run_tasks_mixed(handles, interval, output_path):
     loop = asyncio.get_event_loop()
@@ -273,6 +286,16 @@ confirm_merge(input_paths, output_path)
 
 tmpdir.cleanup()
 
+"""
+The bottom-up approach:
+(1)  Create a coroutine version of each leak funcitons.
+(2)  Change synchronous functions so that the call the coroutine versions
+and run the event loop.
+(3)  Move up a level of the call hierarchy, make another layer of coroutines, and change call to
+synchronous funcitons call to coroutines.
+(4)  Delete synchoronous wrapperstines created in step 2 as you stop requiring them to glue
+things together.
+[EP, p, 287]
 
 # Example 11
 def tail_file(handle, interval, write_func):

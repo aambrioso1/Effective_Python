@@ -3,21 +3,31 @@ Item 60:  Achieve Highly Concurrent I/O with Coroutines
 
 """
 
-#!/usr/bin/env PYTHONHASHSEED=1234 python3
+"""
+Notes
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+"Python address the problem of highly concurrent I/O with Coroutines."
+
+Coroutines will allow us to run thousands of functions "seemingly" simultaneously.
+
+Corountine are similar to threads except that they pause at each waite expression and resume 
+executing an await function after the pending awaitable is resolve.    It behave like yield
+in generators.
+
+"The beauty of coroutines is that they decouple your code's instructions for the external environment from
+the implementation that carries out your wishes.   They let you focus on the logic of what you are trying to do
+instead of working on how to accomplish your goals concurrently."
+
+Functions defined using the async keyword are called coroutines.   A caller can reeive the result of a dependent
+coroutine by using the await keyword.
+
+Coroutines provide an efficient way to scale concurrency to thousands of functions.
+
+Coroutines can use fan-out and fan-in in order to parallelize I/O while avoiding the problems associated with threads.
+
+"""
+
+#!/usr/bin/env PYTHONHASHSEED=1234 python3
 
 # Reproduce book environment
 import random
@@ -50,8 +60,10 @@ def close_open_files():
 
 atexit.register(close_open_files)
 
+print('\n********** start of Item 60 **********\n')
 
-# Example 1
+# Example 1:  The game_logic function becomes a coroutine by using async def instead of def.
+
 ALIVE = '*'
 EMPTY = '-'
 
@@ -77,25 +89,6 @@ class Grid:
             output += '\n'
         return output
 
-from threading import Lock
-
-class LockingGrid(Grid):
-    def __init__(self, height, width):
-        super().__init__(height, width)
-        self.lock = Lock()
-
-    def __str__(self):
-        with self.lock:
-            return super().__str__()
-
-    def get(self, y, x):
-        with self.lock:
-            return super().get(y, x)
-
-    def set(self, y, x, state):
-        with self.lock:
-            return super().set(y, x, state)
-
 def count_neighbors(y, x, get):
     n_ = get(y - 1, x + 0)  # North
     ne = get(y - 1, x + 1)  # Northeast
@@ -112,11 +105,11 @@ def count_neighbors(y, x, get):
             count += 1
     return count
 
-def game_logic(state, neighbors):
-    # Do some blocking input/output in here:
-    data = my_socket.recv(100)
+async def game_logic(state, neighbors):
+    # Do some input/output in here:
+    data = await my_socket.read(50)
 
-def game_logic(state, neighbors):
+async def game_logic(state, neighbors):
     if state == ALIVE:
         if neighbors < 2:
             return EMPTY     # Die: Too few
@@ -127,33 +120,34 @@ def game_logic(state, neighbors):
             return ALIVE     # Regenerate
     return state
 
-def step_cell(y, x, get, set):
+
+# Example 2:  We also make step_cell a coroutine.
+async def step_cell(y, x, get, set):
     state = get(y, x)
     neighbors = count_neighbors(y, x, get)
-    next_state = game_logic(state, neighbors)
+    next_state = await game_logic(state, neighbors)
     set(y, x, next_state)
 
 
-# Example 2
-from concurrent.futures import ThreadPoolExecutor
+# Example 3: We fan out and fan in with step_cell and gather respectively.
+import asyncio
 
-def simulate_pool(pool, grid):
-    next_grid = LockingGrid(grid.height, grid.width)
+async def simulate(grid):
+    next_grid = Grid(grid.height, grid.width)
 
-    futures = []
+    tasks = []
     for y in range(grid.height):
         for x in range(grid.width):
-            args = (y, x, grid.get, next_grid.set)
-            future = pool.submit(step_cell, *args)  # Fan out
-            futures.append(future)
+            task = step_cell(
+                y, x, grid.get, next_grid.set)      # Fan out
+            tasks.append(task)
 
-    for future in futures:
-        future.result()                             # Fan in
+    await asyncio.gather(*tasks)                    # Fan in
 
     return next_grid
 
 
-# Example 3
+# Example 4:  THe asyncio.run command exectues the simulate coroutine.
 class ColumnPrinter:
     def __init__(self):
         self.columns = []
@@ -182,7 +176,9 @@ class ColumnPrinter:
 
         return '\n'.join(rows)
 
-grid = LockingGrid(5, 9)
+logging.getLogger().setLevel(logging.ERROR)
+
+grid = Grid(5, 9)
 grid.set(0, 3, ALIVE)
 grid.set(1, 4, ALIVE)
 grid.set(2, 2, ALIVE)
@@ -190,23 +186,85 @@ grid.set(2, 3, ALIVE)
 grid.set(2, 4, ALIVE)
 
 columns = ColumnPrinter()
-with ThreadPoolExecutor(max_workers=10) as pool:
-    for i in range(5):
-        columns.append(str(grid))
-        grid = simulate_pool(pool, grid)
+for i in range(5):
+    columns.append(str(grid))
+    grid = asyncio.run(simulate(grid))   # Run the event loop
 
 print(columns)
 
 
-# Example 4
+print('\n********** end of first part **********\n')
+
+logging.getLogger().setLevel(logging.DEBUG)
+
+
+# Example 5:  With coroutines we can use the interactive debugger to step through code.
 try:
-    def game_logic(state, neighbors):
+    async def game_logic(state, neighbors):
         raise OSError('Problem with I/O')
     
-    with ThreadPoolExecutor(max_workers=10) as pool:
-        task = pool.submit(game_logic, ALIVE, 3)
-        task.result()
+    logging.getLogger().setLevel(logging.ERROR)
+    
+    asyncio.run(game_logic(ALIVE, 3))
+    
+    logging.getLogger().setLevel(logging.DEBUG)
 except:
     logging.exception('Expected')
 else:
     assert False
+
+
+# Example 6:  We can and parallel I/O to other functions simple by adding the asynch and await keywords.
+async def count_neighbors(y, x, get):
+    n_ = get(y - 1, x + 0)  # North
+    ne = get(y - 1, x + 1)  # Northeast
+    e_ = get(y + 0, x + 1)  # East
+    se = get(y + 1, x + 1)  # Southeast
+    s_ = get(y + 1, x + 0)  # South
+    sw = get(y + 1, x - 1)  # Southwest
+    w_ = get(y + 0, x - 1)  # West
+    nw = get(y - 1, x - 1)  # Northwest
+    neighbor_states = [n_, ne, e_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    return count
+
+async def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = await count_neighbors(y, x, get)
+    next_state = await game_logic(state, neighbors)
+    set(y, x, next_state)
+
+async def game_logic(state, neighbors):
+    if state == ALIVE:
+        if neighbors < 2:
+            return EMPTY     # Die: Too few
+        elif neighbors > 3:
+            return EMPTY     # Die: Too many
+    else:
+        if neighbors == 3:
+            return ALIVE     # Regenerate
+    return state
+
+logging.getLogger().setLevel(logging.ERROR)
+
+grid = Grid(5, 9)
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    grid = asyncio.run(simulate(grid))
+
+print(columns)
+
+logging.getLogger().setLevel(logging.DEBUG)
+
+
+print('\n********** end of second part **********\n')

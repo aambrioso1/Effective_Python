@@ -1,6 +1,10 @@
 """
 Item 65: Take Advantage of Each Block in try/except/else/finally
 
+The try/finally block:  Allows you to run cleanup code even if exceptions are raised in the try block
+The else/block:  Allows you to minimize code in the try block and to distiguish success from the try/except block.
+The else block can be used to excecute code after a succesful try block and before the finally block.
+
 """
 
 
@@ -38,7 +42,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  We use try finally to handle exceptions in the try block and the run clean up code in the finally block
 def try_finally_example(filename):
     print('* Opening file')
     handle = open(filename, encoding='utf-8') # May raise OSError
@@ -50,7 +54,8 @@ def try_finally_example(filename):
         handle.close()        # Always runs after try block
 
 
-# Example 2
+# Example 2:  Shows the exception in the try block caused by reading a bad byte.  This is an err
+# we are anticipating that we will need to handle.
 try:
     filename = 'random_data.txt'
     
@@ -67,7 +72,8 @@ else:
     assert False
 
 
-# Example 3
+# Example 3:  This examples shows an error occuring before the try block in the function of Example 1.
+# We put this error outside the try block so that the finally block is not executed (handle.close)
 try:
     try_finally_example('does_not_exist.txt')
 except:
@@ -75,8 +81,12 @@ except:
 else:
     assert False
 
+print('\n********** End of try/finally block **********\n')
 
-# Example 4
+# Example 4:  Now we include an else block to separate code from the try/except block.   
+# In this example ValueError is handle by the try/except block and a KeyError is separated out by
+# put this code in the else block.
+
 import json
 
 def load_json_key(data, key):
@@ -91,11 +101,11 @@ def load_json_key(data, key):
         return result_dict[key]         # May raise KeyError
 
 
-# Example 5
+# Example 5:   The successful case key is looked up in the else block.
 assert load_json_key('{"foo": "bar"}', 'foo') == 'bar'
 
 
-# Example 6
+# Example 6:  Input data is bad so the exception in caught in the except block
 try:
     load_json_key('{"foo": bad payload', 'foo')
 except:
@@ -104,7 +114,7 @@ else:
     assert False
 
 
-# Example 7
+# Example 7:  SInce the key lookup occurs in the the except block an exception is distinguished.
 try:
     load_json_key('{"foo": "bar"}', 'does not exist')
 except:
@@ -113,7 +123,15 @@ else:
     assert False
 
 
-# Example 8
+# Example 8:   This example puts it all together with a try/except/else/finally
+"""
+try block:  file the file process the except block
+except block:  handle exception in the try block that are excepted
+else block:  update the file in palnce and allow related exception to propogate up
+finally block:  cleans up the file handle.  this block always runs
+"""
+print('**************** Example 8 starts *******************\n')
+
 UNDEFINED = object()
 DIE_IN_ELSE_BLOCK = False
 
@@ -149,6 +167,8 @@ def divide_json(path):
 
 
 # Example 9
+print('**************** Everything works: try, else, and finally excecute *******************')
+
 temp_path = 'random_data.json'
 
 with open(temp_path, 'w') as f:
@@ -156,7 +176,7 @@ with open(temp_path, 'w') as f:
 
 assert divide_json(temp_path) == 0.1
 
-
+print('\n**************** The calulation is invalid (division by zero error) : try, except, and finally excecute *******************')
 # Example 10
 with open(temp_path, 'w') as f:
     f.write('{"numerator": 1, "denominator": 0}')
@@ -165,6 +185,7 @@ assert divide_json(temp_path) is UNDEFINED
 
 
 # Example 11
+print('\n**************** The jason data is bad: try and finally excecute *******************')
 try:
     with open(temp_path, 'w') as f:
         f.write('{"numerator": 1 bad data')
@@ -176,7 +197,9 @@ else:
     assert False
 
 
-# Example 12
+# Example 12:  New exception is raise and we know exception will be in the else block and clean up with the finally block.
+print('\n**************** New exception raised: try, else, and finally excecute *******************')
+
 try:
     with open(temp_path, 'w') as f:
         f.write('{"numerator": 1, "denominator": 10}')
@@ -187,4 +210,3 @@ except:
     logging.exception('Expected')
 else:
     assert False
-© 2021 GitHub, Inc.

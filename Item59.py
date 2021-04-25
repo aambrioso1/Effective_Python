@@ -3,6 +3,18 @@ Item 59:  Consider ThreadPoolExecutor When Threads are Necessary for Concurrency
 
 """
 
+"""
+Notes
+The ThreadPoolExecutor class combines the best of Thread and Queue to solve parallel
+input I/O problems.
+
+ThreadPoolExcecutor enables simple I/O parallelism with limited refactor and cost savings.
+Eliminates potential memory blow-ups.
+Limited in scale.
+
+
+"""
+
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
 
@@ -38,7 +50,9 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+print('\n********** Start of Item 59 **********\n')
+
+# Example 1:  We bring back the functions and classes used earlier for the Game of Life
 ALIVE = '*'
 EMPTY = '-'
 
@@ -121,7 +135,9 @@ def step_cell(y, x, get, set):
     set(y, x, next_state)
 
 
-# Example 2
+# Example 2:  Instead of starting new Thread instances for each Grid square we fan out by
+#submitting a function to the executer.
+
 from concurrent.futures import ThreadPoolExecutor
 
 def simulate_pool(pool, grid):
@@ -131,11 +147,11 @@ def simulate_pool(pool, grid):
     for y in range(grid.height):
         for x in range(grid.width):
             args = (y, x, grid.get, next_grid.set)
-            future = pool.submit(step_cell, *args)  # Fan out
+            future = pool.submit(step_cell, *args)  # Fan out by submitting to the executer
             futures.append(future)
 
     for future in futures:
-        future.result()                             # Fan in
+        future.result()                             # Fan in:  Collects results
 
     return next_grid
 
@@ -177,15 +193,25 @@ grid.set(2, 3, ALIVE)
 grid.set(2, 4, ALIVE)
 
 columns = ColumnPrinter()
-with ThreadPoolExecutor(max_workers=10) as pool:
+with ThreadPoolExecutor(max_workers=10) as pool: # Threads allocated in advance and max can be specified
     for i in range(5):
         columns.append(str(grid))
         grid = simulate_pool(pool, grid)
 
 print(columns)
 
+print('\n********** end of first part **********\n')
 
-# Example 4
+# Example 4: We fake an exception to show that exceptions will propagate back to the caller 
+# "when the results method is called on the Future instance by the submit method."
+# This allows for better debugging.
+# Other advantages:
+# To add parallelism to count_neighbors no modification is required.
+# CPU parallelism is possible with concurrent.futures
+# Disadvantage:  still cannot scale to 10000+ cells.    
+# This option is good when there is not asynchronous solution like file I/O
+# Coroutines are needed fo highly concurrent I/O/
+
 try:
     def game_logic(state, neighbors):
         raise OSError('Problem with I/O')
@@ -197,3 +223,5 @@ except:
     logging.exception('Expected')
 else:
     assert False
+
+print('\n********** end of second part **********\n')

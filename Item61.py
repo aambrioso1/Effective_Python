@@ -1,23 +1,23 @@
 """
 Item 61: Know How to Port Threaded I/O to asyncio
 
+This item shows how to port code that does threaded, blocking I/O over coroutines and asynchronous I/O.
+
+Slaitkin implements a TCP-based server (Transfer Control Protocol.  See https://en.wikipedia.org/wiki/Transmission_Control_Protocol)
+for guessing a number.   This type of client/server is typically built using blocking I/O and threads.
+
+
+Python provides asynchronous versions of for loops, with statements, generators, comprehensions, and library
+helper functions.   Next and iter are not currently implemented.
+
+The asyncio built-in module makes it easy to port existing code that uses threads and blocking I/O over to coroutines
+and asynchronous I/O.
+
+See https://docs.python.or/3/library/asynchio.html for more information.
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # Reproduce book environment
 import random
@@ -51,7 +51,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  First we construct a helper class for managing sending and receiving messages.
 class EOFError(Exception):
     pass
 
@@ -72,7 +72,8 @@ class ConnectionBase:
         return line[:-1].decode()
 
 
-# Example 2
+# Example 2:  We implement the server.   Handles one connection at a time and maintains the client's 
+# session state.
 import random
 
 WARMER = 'Warmer'
@@ -85,7 +86,9 @@ class UnknownCommandError(Exception):
 
 class Session(ConnectionBase):
     def __init__(self, *args):
-        super().__init__(*args)
+        # See Item 40 - super() solves the problem of superclass initialization and diamond inheritance.
+        # See also:  https://en.wikipedia.org/wiki/Multiple_inheritance
+        super().__init__(*args)  
         self._clear_state(None, None)
 
     def _clear_state(self, lower, upper):
@@ -95,7 +98,7 @@ class Session(ConnectionBase):
         self.guesses = []
 
 
-# Example 3
+# Example 3:  Handles incoming commands and chooses the appropriate method
     def loop(self):
         while command := self.receive():
             parts = command.split(' ')
@@ -109,7 +112,7 @@ class Session(ConnectionBase):
                 raise UnknownCommandError(command)
 
 
-# Example 4
+# Example 4:  Sets upper and lower boundaries for the guess.
     def set_params(self, parts):
         assert len(parts) == 3
         lower = int(parts[1])
@@ -117,7 +120,7 @@ class Session(ConnectionBase):
         self._clear_state(lower, upper)
 
 
-# Example 5
+# Example 5:  Makes a new guess making sure the same number is not chosen.
     def next_guess(self):
         if self.secret is not None:
             return self.secret
@@ -133,7 +136,7 @@ class Session(ConnectionBase):
         self.send(format(guess))
 
 
-# Example 6
+# Example 6:  Receives client decision and returns colder or warmer.
     def receive_report(self, parts):
         assert len(parts) == 2
         decision = parts[1]
@@ -145,7 +148,7 @@ class Session(ConnectionBase):
         print(f'Server: {last} is {decision}')
 
 
-# Example 7
+# Example 7:  Implement the client using a stateful class
 import contextlib
 import math
 
@@ -159,7 +162,7 @@ class Client(ConnectionBase):
         self.last_distance = None
 
 
-# Example 8
+# Example 8:  Sends first commands to server
     @contextlib.contextmanager
     def session(self, lower, upper, secret):
         print(f'Guess a number between {lower} and {upper}!'
@@ -173,7 +176,7 @@ class Client(ConnectionBase):
             self.send('PARAMS 0 -1')
 
 
-# Example 9
+# Example 9:  New guesses are requested from the server.
     def request_numbers(self, count):
         for _ in range(count):
             self.send('NUMBER')
@@ -183,7 +186,7 @@ class Client(ConnectionBase):
                 return
 
 
-# Example 10
+# Example 10:  Reports whether a  guess is warmer or colder.
     def report_outcome(self, number):
         new_distance = math.fabs(number - self.secret)
         decision = UNSURE
@@ -203,7 +206,7 @@ class Client(ConnectionBase):
         return decision
 
 
-# Example 11
+# Example 11:  Run the server.
 import socket
 from threading import Thread
 
@@ -229,7 +232,7 @@ def run_server(address):
             thread.start()
 
 
-# Example 12
+# Example 12:  CLients runs in the main thread and returns the results.
 def run_client(address):
     with socket.create_connection(address) as connection:
         client = Client(connection)
@@ -246,7 +249,7 @@ def run_client(address):
     return results
 
 
-# Example 13
+# Example 13:  Put everything together in main() and check if it works.
 def main():
     address = ('127.0.0.1', 1234)
     server_thread = Thread(
@@ -259,9 +262,11 @@ def main():
 
 main()
 
+print('********* End of program using threading *********')
 
-# Example 14
-class AsyncConnectionBase:
+# Example 14:  Now we refactor the code to use asyncio
+# First we update ConnectionBase to provide coroutines.
+class AsyncConnectionBase:  
     def __init__(self, reader, writer):             # Changed
         self.reader = reader                        # Changed
         self.writer = writer                        # Changed
@@ -279,7 +284,7 @@ class AsyncConnectionBase:
         return line[:-1].decode()
 
 
-# Example 15
+# Example 15:  Create a session class for a single connection.
 class AsyncSession(AsyncConnectionBase):            # Changed
     def __init__(self, *args):
         super().__init__(*args)
@@ -292,7 +297,7 @@ class AsyncSession(AsyncConnectionBase):            # Changed
         self.guesses = []
 
 
-# Example 16
+# Example 16:  Need to add the await keyword
     async def loop(self):                           # Changed
         while command := await self.receive():      # Changed
             parts = command.split(' ')
@@ -314,7 +319,7 @@ class AsyncSession(AsyncConnectionBase):            # Changed
         self._clear_values(lower, upper)
 
 
-# Example 18
+# Example 18:  Add async and await keywords
     def next_guess(self):
         if self.secret is not None:
             return self.secret
@@ -342,7 +347,7 @@ class AsyncSession(AsyncConnectionBase):            # Changed
         print(f'Server: {last} is {decision}')
 
 
-# Example 20
+# Example 20:  Need to inherit from AsyncConnectioBase
 class AsyncClient(AsyncConnectionBase):             # Changed
     def __init__(self, *args):
         super().__init__(*args)
@@ -353,7 +358,7 @@ class AsyncClient(AsyncConnectionBase):             # Changed
         self.last_distance = None
 
 
-# Example 21
+# Example 21:  Need to use async context manager.
     @contextlib.asynccontextmanager                 # Changed
     async def session(self, lower, upper, secret):  # Changed
         print(f'Guess a number between {lower} and {upper}!'
@@ -400,7 +405,7 @@ class AsyncClient(AsyncConnectionBase):             # Changed
         return decision
 
 
-# Example 24
+# Example 24:  Nees to rewrite the code that runs the server.
 import asyncio
 
 async def handle_async_connection(reader, writer):
@@ -417,7 +422,7 @@ async def run_async_server(address):
         await server.serve_forever()
 
 
-# Example 25
+# Example 25:  Async keyword need here throughout
 async def run_async_client(address):
     # Wait for the server to listen before trying to connect
     await asyncio.sleep(0.1)
@@ -441,7 +446,7 @@ async def run_async_client(address):
     return results
 
 
-# Example 26
+# Example 26:  Use async create_task to glue the pieces together.
 async def main_async():
     address = ('127.0.0.1', 4321)
 
@@ -452,8 +457,11 @@ async def main_async():
     for number, outcome in results:
         print(f'Client: {number} is {outcome}')
 
+
 logging.getLogger().setLevel(logging.ERROR)
 
 asyncio.run(main_async())
 
 logging.getLogger().setLevel(logging.DEBUG)
+
+print('********* End of program using coroutines *********')

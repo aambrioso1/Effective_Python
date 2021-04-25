@@ -1,6 +1,15 @@
 """
 Item 67: Use datetime Instead of time for Local Clocks 
 
+
+Two ways to accomplish time zone conversions
+(1)  the built-in time module which is error prone
+(2)  the built-in datetime with support from the open-source package pytz (Python time zone)
+
+Avoid the built-in time module for converting different time zones
+Use the built-in datetime module with the open-source the pytz module
+Always se UTC to represent time and converted to local time as the final step
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -37,23 +46,25 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  Demonstrate using the time module to convert a UNIX timestamp (seconds since the UUNIX epoch in UTC) to
+# the host computer's time zone 
 import time
 
-now = 1552774475
+now = 1619303700
 local_tuple = time.localtime(now)
 time_format = '%Y-%m-%d %H:%M:%S'
 time_str = time.strftime(time_format, local_tuple)
-print(time_str)
+print(f'{time_str=}')
 
 
-# Example 2
+# Example 2:  Convert computer time to UTC
 time_tuple = time.strptime(time_str, time_format)
 utc_now = time.mktime(time_tuple)
-print(utc_now)
+print(f'{utc_now=}')
 
 
-# Example 3
+# Example 3:  The time module depends on who underlying C functions work on the host system which makes it
+# unreliable.
 import os
 
 if os.name == 'nt':
@@ -76,41 +87,45 @@ else:
     assert False
 
 
-# Example 5
+# Example 5:   The datetime module is better:  Convert present time to UTC.
 from datetime import datetime, timezone
 
-now = datetime(2019, 3, 16, 22, 14, 35)
+now = datetime(2021, 4, 24, 18, 35, 00)
 now_utc = now.replace(tzinfo=timezone.utc)
 now_local = now_utc.astimezone()
+print('Example 5')
 print(now_local)
 
 
 # Example 6
-time_str = '2019-03-16 15:14:35'
+time_str = '2021-04-24 18:50:00'
 now = datetime.strptime(time_str, time_format)
 time_tuple = now.timetuple()
 utc_now = time.mktime(time_tuple)
 print(utc_now)
 
 
-# Example 7
-import pytz
+# Example 7:   The default Python installation only has time zone information for UTC
+# Convert a NY flight arrival time to UTC
+import pytz # The open-source module contains a full database of every time zone you may need.
+
+# For online documentation see https://pythonhosted.org/pytz/
 
 arrival_nyc = '2019-03-16 23:33:24'
 nyc_dt_naive = datetime.strptime(arrival_nyc, time_format)
 eastern = pytz.timezone('US/Eastern')
 nyc_dt = eastern.localize(nyc_dt_naive)
 utc_dt = pytz.utc.normalize(nyc_dt.astimezone(pytz.utc))
-print(utc_dt)
+print(f'utc_dt = {utc_dt}')
 
 
-# Example 8
+# Example 8:  Now convert to San Franscisco local time
 pacific = pytz.timezone('US/Pacific')
 sf_dt = pacific.normalize(utc_dt.astimezone(pacific))
-print(sf_dt)
+print(f'sf_dt = {sf_dt}')
 
 
-# Example 9
+# Example 9:  Or local time in Nepal
 nepal = pytz.timezone('Asia/Katmandu')
 nepal_dt = nepal.normalize(utc_dt.astimezone(nepal))
-print(nepal_dt)
+print(f'nepal_dt = {nepal_dt}')

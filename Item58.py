@@ -3,21 +3,25 @@ Item 58:  Understand How Using Queue for Concurrency Requires Refactoring
 
 """
 
+"""
+Notes
+We try to implement a threaded pipeline using the Queue class from theh queue built-in module.
+
+We create a fixed number of worker threads upfront and have them do parallelized I/O as needed.
+Two benefits:
+(1)  Resources are kept under control.
+(2)  Eliminate the overhead of frequently starting threads.
+
+
+Using Queue with a fixed number of threads improves scalability of fan-out and fan-in using threads.
+It takes a lot of work to refactor code to use Queue especially for multiple pipelines
+Using Queue limits the toal amount of I/O parallelism that can be leverage compared to other approaches 
+that use built-in Python features and modules.
+
+"""
+
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # Reproduce book environment
 import random
@@ -51,7 +55,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  Create queues to for communication to and from workers.
 from queue import Queue
 
 class ClosableQueue(Queue):
@@ -70,11 +74,13 @@ class ClosableQueue(Queue):
             finally:
                 self.task_done()
 
-in_queue = ClosableQueue()
-out_queue = ClosableQueue()
+in_queue = ClosableQueue() # items consumed from this class instance
+out_queue = ClosableQueue() # results are put into this class instance
 
 
-# Example 2
+# Example 2:  Start multiple threads to consume items from in_queue, process them by
+# call game_logic, and finally put the results in out-queue.
+# Threads will run concurrently and reduce latency.
 from threading import Thread
 
 class StoppableWorker(Thread):
@@ -120,8 +126,18 @@ for _ in range(5):
     thread.start()
     threads.append(thread)
 
+"""
+Example 3:  We redefine simulate to interact with the new queues and request state
+transition decision and receive responses.
+fan-out - adding items to in_queue
+fan-in - consuming items from out_queue until its empty.
+Since Grid.get and Grid.set happen in the simulate_pipeline function the implementation
+has only one thread and does not need Lock.
 
-# Example 3
+The code is easier to debug and excemptions will be caught.
+"""
+
+
 ALIVE = '*'
 EMPTY = '-'
 
@@ -215,6 +231,8 @@ def game_logic(state, neighbors):
             return ALIVE     # Regenerate
     return state
 
+
+
 class ColumnPrinter:
     def __init__(self):
         self.columns = []
@@ -262,8 +280,27 @@ for thread in threads:
 for thread in threads:
     thread.join()
 
+print('\n' + 25*'*'+ ' End of First Example ' + 25*'*' + '\n')
 
 # Example 6
+"""
+Problems remain
+(1)  simulate_pipeline function is hard to follow
+(2)  Extra support classes are required to make code easier to read but this increases complexity.
+(3)  System does not automatically scale
+(4)  Debug requires manually catching exceptions, propogating them on Queue, and re-raising them in the main thread.
+
+Biggest problem:  Code is brittle.
+
+
+Imagine we need to do some I/O within count_neighbors
+
+We will need to add another stage to the pipeline, make sure that exceptions propogate correctly, and will need
+to use a Lock for the Grid class.   This will require a lot of changes as shown below.
+
+Item 59: "Consider ThreadPoolExcecutor When Threads are Necessary for Concurrency"
+Item 60: "Achieve Highly Concurrent I/O with Coroutines"
+"""
 def count_neighbors(y, x, get):
     # Do some blocking input/output in here:
     data = my_socket.recv(100)
@@ -325,7 +362,7 @@ class LockingGrid(Grid):
             return super().set(y, x, state)
 
 
-# Example 8
+# Example 8:  Add logic_queue to the pipeline for the count_neighbors_thread workers.
 in_queue = ClosableQueue()
 logic_queue = ClosableQueue()
 out_queue = ClosableQueue()
@@ -345,7 +382,7 @@ for _ in range(5):
     threads.append(thread)
 
 
-# Example 9
+# Example 9:  Need to update simulate_pipeline to ensure that work fans out and back in correctly.
 def simulate_phased_pipeline(
         grid, in_queue, logic_queue, out_queue):
     for y in range(grid.height):
@@ -392,7 +429,7 @@ for thread in threads:
     thread.join()
 
 
-# Example 11
+# Example 11:
 # Make sure exception propagation works as expected
 def count_neighbors(*args):
     raise OSError('Problem with I/O in count_neighbors')

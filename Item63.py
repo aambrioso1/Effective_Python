@@ -1,23 +1,18 @@
 """
 Item 63:  Avoid Blocking the asyncio Event Loop to Maximize Responsiveness
 
+Since open, close, and write calls for output file handles happen in the main event loop,
+these calls to the host operating system may block the event loop for significant amounts of time. 
+This can slow down the code.
+
+Making system calls in coroutines can slow down code.
+
+The debug=True parameter of asyncio.run will help detect when coroutines are slowing the event loop down.
+
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
-
-# Copyright 2014-2019 Brett Slatkin, Pearson Education Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 # Reproduce book environment
 import random
@@ -52,6 +47,97 @@ atexit.register(close_open_files)
 
 
 # Example 1
+import asyncio
+
+# On Windows, a ProactorEventLoop can't be created within
+# threads because it tries to register signal handlers. This
+# is a work-around to always use the SelectorEventLoop policy
+# instead. See: https://bugs.python.org/issue33792
+policy = asyncio.get_event_loop_policy()
+policy._loop_factory = asyncio.SelectorEventLoop
+
+async def run_tasks(handles, interval, output_path):
+    with open(output_path, 'wb') as output:
+        async def write_async(data):
+            output.write(data)
+
+        tasks = []
+        for handle in handles:
+            coro = tail_async(handle, interval, write_async)
+            task = asyncio.create_task(coro)
+            tasks.append(task)
+
+        await asyncio.gather(*tasks)
+
+
+# Example 2:  THis example shows how to use the debug=True parameter of the asynchio.run
+# to identify the file and line of a bad cooroutine blocked by a slow system call
+
+import time
+
+async def slow_coroutine():
+    time.sleep(0.5)  # Simulating slow I/O
+
+asyncio.run(slow_coroutine(), debug=True)
+
+print(10*'*', 'End of first example', 10*'*')
+
+# Example 3:  To increase responsiveness the problemetic calls are call inside their own
+# event loop using a new Thread subclass.
+
+from threading import Thread
+
+class WriteThread(Thread):
+    def __init__(self, output_path):
+        super().__init__()
+        self.output_path = output_path
+        self.output = None
+        self.loop = asyncio.new_event_loop()
+
+    def run(self):
+        asyncio.set_event_loop(self.loop)
+        with open(self.output_path, 'wb') as self.output:
+            self.loop.run_forever()
+
+        # Run one final round of callbacks so the await on
+        # stop() in another event loop will be resolved.
+        self.loop.run_until_complete(asyncio.sleep(0))
+
+
+# Example 4:  Other threads can call and await in the above thread without a Lock.
+    async def real_write(self, data):
+        self.output.write(data)
+
+    async def write(self, data):
+        coro = self.real_write(data)
+        future = asyncio.run_coroutine_threadsafe(
+            coro, self.loop)
+        await asyncio.wrap_future(future)
+
+
+# Example 5:  Other coroutines can stop the worker thread in a threadsafe manner with similar code.
+    async def real_stop(self):
+        self.loop.stop()
+
+    async def stop(self):
+        coro = self.real_stop()
+        future = asyncio.run_coroutine_threadsafe(
+            coro, self.loop)
+        await asyncio.wrap_future(future)
+
+
+# Example 6:  This code allows the methods to be used with statements.
+    async def __aenter__(self):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.start)
+        return self
+
+    async def __aexit__(self, *_):
+        await self.stop()
+
+
+# Example 7:  Now run_tasks can be refactored into a full asynchronous version that is 
+# easy to read and avoids running slow system calls in the main thread.
 class NoNewData(Exception):
     pass
 
@@ -66,42 +152,30 @@ def readline(handle):
     handle.seek(offset, 0)
     return handle.readline()
 
+async def tail_async(handle, interval, write_func):
+    loop = asyncio.get_event_loop()
 
-# Example 2
-import time
-
-def tail_file(handle, interval, write_func):
     while not handle.closed:
         try:
-            line = readline(handle)
+            line = await loop.run_in_executor(
+                None, readline, handle)
         except NoNewData:
-            time.sleep(interval)
+            await asyncio.sleep(interval)
         else:
-            write_func(line)
+            await write_func(line)
 
-
-# Example 3
-from threading import Lock, Thread
-
-def run_threads(handles, interval, output_path):
-    with open(output_path, 'wb') as output:
-        lock = Lock()
-        def write(data):
-            with lock:
-                output.write(data)
-
-        threads = []
+async def run_fully_async(handles, interval, output_path):
+    async with WriteThread(output_path) as output:
+        tasks = []
         for handle in handles:
-            args = (handle, interval, write)
-            thread = Thread(target=tail_file, args=args)
-            thread.start()
-            threads.append(thread)
+            coro = tail_async(handle, interval, output.write)
+            task = asyncio.create_task(coro)
+            tasks.append(task)
 
-        for thread in threads:
-            thread.join()
+        await asyncio.gather(*tasks)
 
 
-# Example 4
+# Example 8
 # This is all code to simulate the writers to the handles
 import collections
 import os
@@ -153,7 +227,7 @@ def setup():
     return tmpdir, input_paths, handles, output_path
 
 
-# Example 5
+# Example 9
 def confirm_merge(input_paths, output_path):
     found = collections.defaultdict(list)
     with open(output_path, 'rb') as f:
@@ -169,8 +243,7 @@ def confirm_merge(input_paths, output_path):
 
     for key, expected_lines in expected.items():
         found_lines = found[key]
-        assert expected_lines == found_lines, \
-            f'{expected_lines!r} == {found_lines!r}'
+        assert expected_lines == found_lines
 
 input_paths = ...
 handles = ...
@@ -178,123 +251,11 @@ output_path = ...
 
 tmpdir, input_paths, handles, output_path = setup()
 
-run_threads(handles, 0.1, output_path)
+asyncio.run(run_fully_async(handles, 0.1, output_path))
 
 confirm_merge(input_paths, output_path)
 
 tmpdir.cleanup()
 
 
-# Example 6
-import asyncio
-
-# On Windows, a ProactorEventLoop can't be created within
-# threads because it tries to register signal handlers. This
-# is a work-around to always use the SelectorEventLoop policy
-# instead. See: https://bugs.python.org/issue33792
-policy = asyncio.get_event_loop_policy()
-policy._loop_factory = asyncio.SelectorEventLoop
-
-async def run_tasks_mixed(handles, interval, output_path):
-    loop = asyncio.get_event_loop()
-
-    with open(output_path, 'wb') as output:
-        async def write_async(data):
-            output.write(data)
-
-        def write(data):
-            coro = write_async(data)
-            future = asyncio.run_coroutine_threadsafe(
-                coro, loop)
-            future.result()
-
-        tasks = []
-        for handle in handles:
-            task = loop.run_in_executor(
-                None, tail_file, handle, interval, write)
-            tasks.append(task)
-
-        await asyncio.gather(*tasks)
-
-
-# Example 7
-input_paths = ...
-handles = ...
-output_path = ...
-
-tmpdir, input_paths, handles, output_path = setup()
-
-asyncio.run(run_tasks_mixed(handles, 0.1, output_path))
-
-confirm_merge(input_paths, output_path)
-
-tmpdir.cleanup()
-
-
-# Example 8
-async def tail_async(handle, interval, write_func):
-    loop = asyncio.get_event_loop()
-
-    while not handle.closed:
-        try:
-            line = await loop.run_in_executor(
-                None, readline, handle)
-        except NoNewData:
-            await asyncio.sleep(interval)
-        else:
-            await write_func(line)
-
-
-# Example 9
-async def run_tasks(handles, interval, output_path):
-    with open(output_path, 'wb') as output:
-        async def write_async(data):
-            output.write(data)
-
-        tasks = []
-        for handle in handles:
-            coro = tail_async(handle, interval, write_async)
-            task = asyncio.create_task(coro)
-            tasks.append(task)
-
-        await asyncio.gather(*tasks)
-
-
-# Example 10
-input_paths = ...
-handles = ...
-output_path = ...
-
-tmpdir, input_paths, handles, output_path = setup()
-
-asyncio.run(run_tasks(handles, 0.1, output_path))
-
-confirm_merge(input_paths, output_path)
-
-tmpdir.cleanup()
-
-
-# Example 11
-def tail_file(handle, interval, write_func):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-
-    async def write_async(data):
-        write_func(data)
-
-    coro = tail_async(handle, interval, write_async)
-    loop.run_until_complete(coro)
-
-
-# Example 12
-input_paths = ...
-handles = ...
-output_path = ...
-
-tmpdir, input_paths, handles, output_path = setup()
-
-run_threads(handles, 0.1, output_path)
-
-confirm_merge(input_paths, output_path)
-
-tmpdir.cleanup()
+print(10*'*', 'Got the the end', 10*'*')

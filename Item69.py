@@ -1,6 +1,16 @@
 """
 Item 69: Use decimal When Precision is Paramount
 
+Python has built-in data types for practically every type of numerical value.
+
+The Decimal class is ideal for situtations that require high precision and control over
+rounding behavior.
+
+Pass str instances to the Decimal constructor instead of float instatnces if you are compute
+exact values
+
+Consider the Fraction class for representing rational numbers with no limit ot the precision.
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -37,7 +47,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  Interesting example that show that the built-in float type can lead to rounding errors.
 rate = 1.45
 seconds = 3*60 + 42
 cost = rate * seconds / 60
@@ -48,7 +58,7 @@ print(cost)
 print(round(cost, 2))
 
 
-# Example 3
+# Example 3:   The decimal module solve this problem.  It takes calculations out to 28 decimal places.
 from decimal import Decimal
 
 rate = Decimal('1.45')
@@ -56,13 +66,13 @@ seconds = Decimal(3*60 + 42)
 cost = rate * seconds / Decimal(60)
 print(cost)
 
-
-# Example 4
+# Example 4:   Decimal instance can be give values as a str or as a int or float.  Using string avoids the loss
+# of precision inherent in the Python float type.
 print(Decimal('1.45'))
 print(Decimal(1.45))
 
 
-# Example 5
+# Example 5:  It is not a problem with the integer type.
 print('456')
 print(456)
 
@@ -78,7 +88,7 @@ print(small_cost)
 print(round(small_cost, 2))
 
 
-# Example 8
+# Example 8:   The quantize method along with ROUND_UP will round value up based on a defined minimum quantity.
 from decimal import ROUND_UP
 
 rounded = cost.quantize(Decimal('0.01'), rounding=ROUND_UP)
