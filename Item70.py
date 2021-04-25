@@ -1,6 +1,17 @@
 """
 Item 70: Profile Before Optimizing
 
+Python has two built-in modules for profiling.  On is pure python (profile) and the other is
+a C-extension module (cProfile).    The cProfile module is better because it has a minimal effect on
+system performance.   The profile module is a high overhead that may impact the performance of the program
+you are profiling and skew results.
+
+Slowdowns in Python can be obscure.   Profile you programs before optimizing.
+Use cProfile instead of profile to get more accurate profiling data.
+The Profile object's runcall method provides every you need to profile a tree of functions.
+The Stats object lets you select and print the subsist of profiling information you need.
+
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -37,7 +48,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  We create an inefficient sort algorithm to profile.
 def insertion_sort(data):
     result = []
     for value in data:
@@ -45,7 +56,8 @@ def insertion_sort(data):
     return result
 
 
-# Example 2
+# Example 2:  The key to the insertion sort is the part of the algorithm that decides the insertion point.
+# Here we construct an inefficient algorithm.
 def insert_value(array, value):
     for i, existing in enumerate(array):
         if existing > value:
@@ -54,7 +66,7 @@ def insert_value(array, value):
     array.append(value)
 
 
-# Example 3
+# Example 3:   We create some random data to sort.  THen sort it.
 from random import randint
 
 max_size = 10**4
@@ -62,14 +74,14 @@ data = [randint(0, max_size) for _ in range(max_size)]
 test = lambda: insertion_sort(data)
 
 
-# Example 4
+# Example 4:   We create a instance of cProfile and run it on our test sort.
 from cProfile import Profile
 
 profiler = Profile()
 profiler.runcall(test)
 
 
-# Example 5
+# Example 5:  Methods in the Stats object will allow us to extract useful information from or profile data.
 from pstats import Stats
 
 stats = Stats(profiler)
@@ -79,7 +91,7 @@ stats.sort_stats('cumulative')
 stats.print_stats()
 
 
-# Example 6
+# Example 6:  Now we use a more efficient built-in method to decide the insertion point.
 from bisect import bisect_left
 
 def insert_value(array, value):
@@ -87,7 +99,7 @@ def insert_value(array, value):
     array.insert(i, value)
 
 
-# Example 7
+# Example 7:  Now we generate data for the new algorithm.
 profiler = Profile()
 profiler.runcall(test)
 stats = Stats(profiler, stream=STDOUT)
@@ -95,8 +107,10 @@ stats.strip_dirs()
 stats.sort_stats('cumulative')
 stats.print_stats()
 
+print("****** Compare the profile data for the two insert methodes *******")
 
-# Example 8
+# Example 8:  We create a group of functions that work together.   It is difficulty to
+# tell where the execution time is spoend using the default outpoint of cProfile.
 def my_utility(a, b):
     c = 1
     for i in range(100):
@@ -116,7 +130,7 @@ def my_program():
         second_func()
 
 
-# Example 9
+# Example 9:  We profile my_program and generate the default output.
 profiler = Profile()
 profiler.runcall(my_program)
 stats = Stats(profiler, stream=STDOUT)
@@ -125,7 +139,9 @@ stats.sort_stats('cumulative')
 stats.print_stats()
 
 
-# Example 10
+# Example 10:  We use the print_callers method of the Stats class
+# to show which callers are contributing to the profiling inofrmation of each function.
+# The profiles shows taht my_utility uses first_func the most.
 stats = Stats(profiler, stream=STDOUT)
 stats.strip_dirs()
 stats.sort_stats('cumulative')
