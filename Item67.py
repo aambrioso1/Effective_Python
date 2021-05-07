@@ -53,8 +53,13 @@ import time
 now = 1619303700
 local_tuple = time.localtime(now)
 time_format = '%Y-%m-%d %H:%M:%S'
+time_format2 = '%H:%M'
 time_str = time.strftime(time_format, local_tuple)
+time_str1 = time.strftime(time_format2, local_tuple)
 print(f'{time_str=}')
+print(f'{time_str1=}')
+
+
 
 
 # Example 2:  Convert computer time to UTC
@@ -96,6 +101,10 @@ now_local = now_utc.astimezone()
 print('Example 5')
 print(now_local)
 
+right_now = datetime.now()
+current_time = now.strftime('%H:%M:%S')
+print(f'{current_time=}')
+
 
 # Example 6
 time_str = '2021-04-24 18:50:00'
@@ -107,10 +116,10 @@ print(utc_now)
 
 # Example 7:   The default Python installation only has time zone information for UTC
 # Convert a NY flight arrival time to UTC
+
 import pytz # The open-source module contains a full database of every time zone you may need.
 
 # For online documentation see https://pythonhosted.org/pytz/
-
 arrival_nyc = '2019-03-16 23:33:24'
 nyc_dt_naive = datetime.strptime(arrival_nyc, time_format)
 eastern = pytz.timezone('US/Eastern')
@@ -118,12 +127,10 @@ nyc_dt = eastern.localize(nyc_dt_naive)
 utc_dt = pytz.utc.normalize(nyc_dt.astimezone(pytz.utc))
 print(f'utc_dt = {utc_dt}')
 
-
 # Example 8:  Now convert to San Franscisco local time
 pacific = pytz.timezone('US/Pacific')
 sf_dt = pacific.normalize(utc_dt.astimezone(pacific))
 print(f'sf_dt = {sf_dt}')
-
 
 # Example 9:  Or local time in Nepal
 nepal = pytz.timezone('Asia/Katmandu')

@@ -6,14 +6,18 @@ a C-extension module (cProfile).    The cProfile module is better because it has
 system performance.   The profile module is a high overhead that may impact the performance of the program
 you are profiling and skew results.
 
-Slowdowns in Python can be obscure.   Profile you programs before optimizing.
+Slow downs in Python can be obscure.   You should always profile your programs before optimizing.
 Use cProfile instead of profile to get more accurate profiling data.
 The Profile object's runcall method provides every you need to profile a tree of functions.
 The Stats object lets you select and print the subsist of profiling information you need.
 
+Amdahl's law
+See https://en.wikipedia.org/wiki/Amdahl%27s_law
+The law that shows how the theoretical speed up of a parallalizing a serial process is limited
+by the fraction of the process that cannot be parallelized.   The theoretical limit is given 
+be 1/(1-p) where p is the fraction of the process time that can be parallelized.
 
 """
-
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
 # Reproduce book environment
@@ -107,7 +111,7 @@ stats.strip_dirs()
 stats.sort_stats('cumulative')
 stats.print_stats()
 
-print("****** Compare the profile data for the two insert methodes *******")
+print("****** Compare the profile data for the two insert methods *******")
 
 # Example 8:  We create a group of functions that work together.   It is difficulty to
 # tell where the execution time is spoend using the default outpoint of cProfile.
