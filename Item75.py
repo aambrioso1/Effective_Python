@@ -76,7 +76,8 @@ print(f'{int_value} == {str_value} ?')
 # So a == eval(repr(a))
 
 a = '\x07'
-print(repr(a))
+print('a:', a)
+print('repr(a): ', repr(a))
 
 
 # Example 5
