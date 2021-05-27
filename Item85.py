@@ -1,7 +1,7 @@
 """
 Item 85: Use Packages to Organize Modules and Provide Stable APIs
 
-Use stwo folders:
+Uses two folders:
 (1) api_package
 Another folder
 (A) mypackage
