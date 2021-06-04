@@ -124,9 +124,11 @@ class WeightedGradebook:
 # Example 7
     def average_grade(self, name):
         by_subject = self._grades[name]
-
+        print(f'{by_subject=}')
+        print(f'{by_subject.values()=}')
         score_sum, score_count = 0, 0
-        for subject, scores in by_subject.items():
+        # for subject, scores in by_subject.items():
+        for scores in by_subject.values():
             subject_avg, total_weight = 0, 0
             for score, weight in scores:
                 subject_avg += score * weight
@@ -240,3 +242,16 @@ gym.report_grade(100, 0.40)
 gym.report_grade(85, 0.60)
 print(albert.average_grade())
 print(f'A list of Albert\'s grades in gym: {gym._grades}')
+
+"""
+The suggestion here is an interesting one.   A closer inspection of the code will show why it is incorrect.   It also serves an a nice lesson on debugging and gives the inspector a chance to learn something about multiple assignment. 
+
+Below the by_subject assignment, add add these two lines of code (take out the = if you are using older versions of Python):
+        print(f'{by_subject=}')
+        print(f'{by_subject.items()=}')
+
+The result is:
+
+by_subject=defaultdict(<class 'list'>, {'Math': [(75, 0.05), (65, 0.15), (70, 0.8)], 'Gym': [(100, 0.4), (85, 0.6)]})
+by_subject.items()=dict_items([('Math', [(75, 0.05), (65, 0.15), (70, 0.8)]), ('Gym', [(100, 0.4), (85, 0.6)])])
+"""

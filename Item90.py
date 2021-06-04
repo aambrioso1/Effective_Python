@@ -9,9 +9,34 @@ This items uses the following programs:
 (5) item_90_example_12.py
 (6) item_90_example_14.py
 (7) item_90_example_17.py
+
+
+Wide variety of options are available.  See:  https://docs.python.org/3/library/typing.html
+
+Some best practices:
+Don't use type annotations with new code
+Type hints are most useful at the boundaries of a code base.   Type hints complement integration tests.
+Don't try for 100% coverage.
+Include static analysis as part of an automated build and test system.  Configurations used for type 
+checking should be standardized for all collaborators.
+As you add type information, check your code.   Others debuggging errors that introduced by type hints
+may be more difficult to debug.
+Evaluate whether you need type hints at all.
+
+Python has type hinting and special syntax (in the typing built-in module) for annotating variables,
+fields, functions, and methods.
+Static type checkers can leverage type information to avoid bugs at runtime.
+Follow the best practices listed above.
+
+Finally finished!!!
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
+
+
+
+
 
 # Reproduce book environment
 import random

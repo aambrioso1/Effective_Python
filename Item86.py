@@ -6,6 +6,13 @@ Requires three programs:
 (2) dev_main.py
 (3) prod_main.py
 
+You can adjusts a module's contents to different deployment environments with normal Python statements.
+in the module scope.
+Module content dependent on host can be accessed with the sys and os modules.
+
+For more complex production configurations tools like the configparser built-in module let you maintain
+production configurations for better collaboration.
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -57,3 +64,5 @@ if sys.platform.startswith('win32'):
     Database = Win32Database
 else:
     Database = PosixDatabase
+
+print(f'{Database=}')

@@ -37,7 +37,7 @@ def close_open_files():
 atexit.register(close_open_files)
 
 
-# Example 1
+# Example 1:  A function to compute the distance given the speed and duration.
 def print_distance(speed, duration):
     distance = speed * duration
     print(f'{distance} miles')
@@ -45,11 +45,11 @@ def print_distance(speed, duration):
 print_distance(5, 2.5)
 
 
-# Example 2
+# Example 2:  Factor does not work if the resulting distance is not in miles.
 print_distance(1000, 3)
 
 
-# Example 3
+# Example 3:  We create a dictionary of conversions to use to improve our original function
 CONVERSIONS = {
     'mph': 1.60934 / 3600 * 1000,   # m/s
     'hours': 3600,                  # seconds
@@ -78,13 +78,14 @@ def print_distance(speed, duration, *,
     print(f'{distance} {distance_units}')
 
 
-# Example 4
+# Example 4:  Now by specifying units the function works much better.
 print_distance(1000, 3,
                speed_units='meters',
                time_units='seconds')
 
 
-# Example 5
+# Example 5: We introduce warnings to help migrate callers of our API to the new function
+# We modify the code to issue a warning if the units are not supplied.
 import warnings
 
 def print_distance(speed, duration, *,
@@ -113,7 +114,7 @@ def print_distance(speed, duration, *,
     print(f'{distance} {distance_units}')
 
 
-# Example 6
+# Example 6:   We use contextlib to capture the sys.stderr output/
 import contextlib
 import io
 
@@ -124,9 +125,10 @@ with contextlib.redirect_stderr(fake_stderr):
                    time_units='seconds')
 
 print(fake_stderr.getvalue())
+print('****** End of Example 6: Using contextlib ******')
 
-
-# Example 7
+# Example 7:  We define a helper function that warns that optional argument is 
+# missing and assigns a default value.
 def require(name, value, default):
     if value is not None:
         return value
@@ -152,7 +154,7 @@ def print_distance(speed, duration, *,
     print(f'{distance} {distance_units}')
 
 
-# Example 8
+# Example 8:  We can identify the line of code that needs to be updated.
 import contextlib
 import io
 
@@ -163,9 +165,9 @@ with contextlib.redirect_stderr(fake_stderr):
                    time_units='seconds')
 
 print(fake_stderr.getvalue())
+print('****** End of Example 8: Show clearly where the error is ******')
 
-
-# Example 9
+# Example 9: Convert warnings to errors.   This will let users know they need to update their code.
 warnings.simplefilter('error')
 try:
     warnings.warn('This usage is deprecated',
@@ -177,7 +179,7 @@ else:
 
 warnings.resetwarnings()
 
-
+print('****** end of Example 9 ******')
 # Example 10
 warnings.resetwarnings()
 
@@ -187,7 +189,8 @@ warnings.warn('This will not be printed to stderr')
 warnings.resetwarnings()
 
 
-# Example 11
+# Example 11:  Logging warnings so they won't create errors.
+#  Also by logging warnings we can review them to see if there are bugs in the progarm.
 import logging
 
 fake_stderr = io.StringIO()
@@ -210,7 +213,8 @@ print(fake_stderr.getvalue())
 warnings.resetwarnings()
 
 
-# Example 12
+# Example 12:  We record warnings.
+# We can use this information to make sure the program runs as expected.
 with warnings.catch_warnings(record=True) as found_warnings:
     found = require('my_arg', None, 'fake units')
     expected = 'fake units'
@@ -223,3 +227,5 @@ single_warning = found_warnings[0]
 assert str(single_warning.message) == (
     'my_arg will be required soon, update your code')
 assert single_warning.category == DeprecationWarning
+
+print(f'{str(single_warning.message)=}')

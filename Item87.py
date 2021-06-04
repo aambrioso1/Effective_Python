@@ -1,6 +1,15 @@
 """
 Item 87: Define a Root Exception to Insulate Callers from APIs
 
+"When you are defining a modules API, the exceptions you raise are just as much a part of your interface
+as the functions and classes your define."
+
+Define root excepts for modules to insulate API consumers from an API
+Catching root exceptions can help find bugs in code that consumes an API
+Catching exceptions with Python's exception base class can help find bug in an API
+Intermediate root exceptions can add more specific type of more scalable code.
+
+
 """
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
@@ -49,7 +58,7 @@ except ValueError:
     pass
 else:
     assert False
-
+print('******* End of Example 1 ********')
 
 # Example 2
 # my_module.py
@@ -92,7 +101,6 @@ except my_module.Error:
 else:
     assert False
 
-
 # Example 4
 SENTINEL = object()
 weight = SENTINEL
@@ -107,7 +115,7 @@ else:
 
 assert weight is SENTINEL
 
-
+print('********** End of Example 4 ***********')
 # Example 5
 try:
     weight = SENTINEL
