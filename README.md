@@ -23,3 +23,17 @@ Slatkin has include all the code in the book on his GitHub page.    This code ha
 EP has some nice items about Python classes.  Item 43 shows that classes can inherit simple functionality directly from container types. It is particularly instructive to note that by implementing the appropriate dunder methods, abstract classes can inherit the functionality associated with Python's build-in classes.     For custom container types the collections.abc module will provide all the functionality of a built-in container type as long as the required methods are implemented.   
 
 Item 45 discusses the @property decorator.   This decorator is nice for making incremental changes to data models in Python classes.
+
+Item 84 discusses the command line argument:
+> python -m pydoc -p 5000
+Opens a server that will allow you to browse all the documentation accessible to the interpreter.
+
+
+Top Items
+* Item 4: Prefer Interpolated F-Strings
+* Item 7:  Prefer enumerate Over range
+* virtual environments
+* functions
+* classes
+* pypi
+* Item 84:  Write Docstrings for Every Function, Class, and Module
