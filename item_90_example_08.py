@@ -2,7 +2,7 @@
 
 # item_90_example_08.py
 
-# Example 8
+# Example 8:  Use mypy to find errors before running the program
 # Check types in this file with: python -m mypy <path>
 
 class Counter:

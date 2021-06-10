@@ -2,7 +2,7 @@
 
 # item_90_example_10.py
 
-# Example 10
+# Example 10:  More detail error messages from mypy
 # Check types in this file with: python -m mypy <path>
 
 from typing import Callable, List, TypeVar

@@ -2,7 +2,7 @@
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Example 17
+# Example 17:  Code that will catch the error that was previous hidden in example 14.
 from __future__ import annotations
 
 class FirstClass:

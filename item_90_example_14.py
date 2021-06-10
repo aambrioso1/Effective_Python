@@ -2,7 +2,7 @@
 
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Example 14
+# Example 14:  An error that might reamin hidden without mypy
 # Check types in this file with: python -m mypy <path>
 
 class FirstClass:

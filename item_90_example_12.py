@@ -1,6 +1,6 @@
 #!/usr/bin/env PYTHONHASHSEED=1234 python3
 
-# Example 12
+# Example 12:
 # Check types in this file with: python -m mypy <path>
 
 from typing import Optional
